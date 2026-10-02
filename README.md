@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # AI Interview Monitoring and Detection System
 
 ## Product Framing
@@ -84,3 +85,6 @@ cd ../ai-service && python -m venv venv && source venv/bin/activate && pip insta
 
 ## License
 Proprietary - All rights reserved.
+=======
+# AI-Interview-Monitoring-System
+>>>>>>> 04d4b38bbc5eb8e09cc040a53a5ac5b7d8459286
