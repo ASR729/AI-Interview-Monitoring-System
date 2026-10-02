@@ -235,7 +235,7 @@ export function HROrganizationPage() {
         </Button>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+      <Tabs value={activeTab} onValueChange={setActiveTab as any} className="space-y-4">
         <TabsList>
           <TabsTrigger value="team">Team ({teamStats.total})</TabsTrigger>
           <TabsTrigger value="invitations">Invitations ({mockInvitations.filter(i => i.status === 'pending').length})</TabsTrigger>
@@ -441,7 +441,7 @@ export function HROrganizationPage() {
               </CardHeader>
               <CardContent className="flex items-center justify-between">
                 <p className="text-surface-600 dark:text-surface-400">Custom roles are available on Enterprise plans.</p>
-                <Button variant="outline" asChild>
+                <Button variant="neutral" asChild>
                   <Settings className="h-4 w-4 mr-2" aria-hidden="true" />
                   <a href="#">Upgrade to Enterprise</a>
                 </Button>
@@ -495,15 +495,15 @@ export function HROrganizationPage() {
               <div className="space-y-3">
                 <h4 className="font-medium text-surface-900 dark:text-surface-50">Quick Actions</h4>
                 <div className="space-y-2">
-                  <Button variant="outline" className="w-full justify-start gap-2" size="sm">
+                  <Button variant="neutral" className="w-full justify-start gap-2" size="sm">
                     <Mail className="h-4 w-4" aria-hidden="true" />
                     Send Message
                   </Button>
-                  <Button variant="outline" className="w-full justify-start gap-2" size="sm">
+                  <Button variant="neutral" className="w-full justify-start gap-2" size="sm">
                     <Key className="h-4 w-4" aria-hidden="true" />
                     Reset Password
                   </Button>
-                  <Button variant="outline" className="w-full justify-start gap-2" size="sm">
+                  <Button variant="neutral" className="w-full justify-start gap-2" size="sm">
                     <LogOut className="h-4 w-4" aria-hidden="true" />
                     Revoke Sessions
                   </Button>
@@ -512,7 +512,7 @@ export function HROrganizationPage() {
             </div>
 
             <div className="flex justify-end gap-3 pt-4 border-t border-surface-200 dark:border-surface-800">
-              <Button variant="outline" onClick={() => setSelectedMember(null)}>Close</Button>
+              <Button variant="neutral" onClick={() => setSelectedMember(null)}>Close</Button>
               <Button variant="primary">Save Changes</Button>
             </div>
           </div>
@@ -546,7 +546,7 @@ export function HROrganizationPage() {
             <textarea className="input w-full min-h-[80px] resize-y" placeholder="Welcome to the team! You'll have access to..." />
           </div>
           <div className="flex justify-end gap-3 pt-4 border-t border-surface-200 dark:border-surface-800">
-            <Button variant="outline" type="button" onClick={() => setShowInviteModal(false)}>Cancel</Button>
+            <Button variant="neutral" type="button" onClick={() => setShowInviteModal(false)}>Cancel</Button>
             <Button type="submit">Send Invitation</Button>
           </div>
         </form>

@@ -84,7 +84,7 @@ export function IntervieweeSettingsPage() {
         </div>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+      <Tabs value={activeTab} onValueChange={setActiveTab as any} className="w-full">
         <TabsList className="grid grid-cols-3 md:grid-cols-7 gap-1 p-1 bg-surface-100 dark:bg-surface-800 rounded-xl w-full mb-6">
           {tabs.map(tab => (
             <TabsTrigger key={tab.id} value={tab.id} className="flex items-center justify-center gap-2 py-2 px-3 text-sm">
@@ -109,7 +109,7 @@ export function IntervieweeSettingsPage() {
                   </button>
                 </div>
                 <div>
-                  <Button variant="outline" className="gap-2"><Upload className="h-4 w-4" /> Change Photo</Button>
+                  <Button variant="neutral" className="gap-2"><Upload className="h-4 w-4" /> Change Photo</Button>
                   <Button variant="ghost" size="sm" className="mt-2 text-danger-600 hover:text-danger-700">Remove Photo</Button>
                 </div>
               </div>
@@ -396,7 +396,7 @@ export function IntervieweeSettingsPage() {
                     <p className="text-sm text-surface-500 dark:text-surface-400">Receive codes via text message</p>
                   </div>
                 </div>
-                <Button variant="outline" size="sm">Set Up</Button>
+                <Button variant="neutral" size="sm">Set Up</Button>
               </div>
               <div className="flex items-center justify-between p-4 bg-surface-50 dark:bg-surface-800/50 rounded-lg border border-surface-200 dark:border-surface-700">
                 <div className="flex items-center gap-4">
@@ -408,7 +408,7 @@ export function IntervieweeSettingsPage() {
                     <p className="text-sm text-surface-500 dark:text-surface-400">Backup codes for account recovery</p>
                   </div>
                 </div>
-                <Button variant="outline" size="sm" className="gap-1" onClick={() => {}}>
+                <Button variant="neutral" size="sm" className="gap-1" onClick={() => {}}>
                   <Download className="h-3 w-3" />
                   View Codes
                 </Button>
@@ -714,7 +714,7 @@ export function IntervieweeSettingsPage() {
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
                       <p className="font-medium text-surface-900 dark:text-surface-50">{feature.label}</p>
-                      {feature.beta && <Badge variant="outline" size="xs">Beta</Badge>}
+                      {feature.beta && <Badge variant="neutral" size="sm">Beta</Badge>}
                     </div>
                     <p className="text-sm text-surface-500 dark:text-surface-400">{feature.desc}</p>
                   </div>
@@ -759,7 +759,7 @@ export function IntervieweeSettingsPage() {
                   <p className="font-medium text-surface-900 dark:text-surface-50">Export Interview Data</p>
                   <p className="text-sm text-surface-500 dark:text-surface-400">Download all your interview reports, feedback, and settings</p>
                 </div>
-                <Button variant="outline" className="gap-2" onClick={() => success('Export Started', 'Your data export will be ready shortly')}>
+                <Button variant="neutral" className="gap-2" onClick={() => success('Export Started', 'Your data export will be ready shortly')}>
                   <Download className="h-4 w-4" />
                   Export Data
                 </Button>
@@ -769,7 +769,7 @@ export function IntervieweeSettingsPage() {
                   <p className="font-medium text-surface-900 dark:text-surface-50">Import Settings</p>
                   <p className="text-sm text-surface-500 dark:text-surface-400">Restore settings from a previous export</p>
                 </div>
-                <Button variant="outline" className="gap-2" onClick={() => warning('Import', 'Select a settings file to import')}>
+                <Button variant="neutral" className="gap-2" onClick={() => warning('Import', 'Select a settings file to import')}>
                   <Upload className="h-4 w-4" />
                   Import
                 </Button>

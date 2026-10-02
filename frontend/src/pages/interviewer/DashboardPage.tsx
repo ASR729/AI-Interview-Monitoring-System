@@ -268,7 +268,7 @@ export function InterviewerDashboardPage() {
             )}
           </CardContent>
           <CardFooter className="border-t border-surface-200 dark:border-surface-800">
-            <Button variant="outline" className="w-full gap-1">
+            <Button variant="neutral" className="w-full gap-1">
               <Video className="h-4 w-4" aria-hidden="true" />
               View All Live Sessions
             </Button>
@@ -320,27 +320,27 @@ export function InterviewerDashboardPage() {
             <CardDescription>Common tasks and shortcuts</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
-            <Button variant="outline" className="w-full justify-start gap-3" onClick={() => {}}>
+            <Button variant="neutral" className="w-full justify-start gap-3" onClick={() => {}}>
               <Zap className="h-4 w-4" aria-hidden="true" />
               <span>Start Impromptu Interview</span>
             </Button>
-            <Button variant="outline" className="w-full justify-start gap-3" onClick={() => {}}>
+            <Button variant="neutral" className="w-full justify-start gap-3" onClick={() => {}}>
               <Calendar className="h-4 w-4" aria-hidden="true" />
               <span>Schedule New Interview</span>
             </Button>
-            <Button variant="outline" className="w-full justify-start gap-3" onClick={() => {}}>
+            <Button variant="neutral" className="w-full justify-start gap-3" onClick={() => {}}>
               <FileText className="h-4 w-4" aria-hidden="true" />
               <span>Review Pending Reports</span>
             </Button>
-            <Button variant="outline" className="w-full justify-start gap-3" onClick={() => {}}>
+            <Button variant="neutral" className="w-full justify-start gap-3" onClick={() => {}}>
               <Shield className="h-4 w-4" aria-hidden="true" />
               <span>Check Integrity Alerts</span>
             </Button>
-            <Button variant="outline" className="w-full justify-start gap-3" onClick={() => {}}>
+            <Button variant="neutral" className="w-full justify-start gap-3" onClick={() => {}}>
               <Users className="h-4 w-4" aria-hidden="true" />
               <span>View Candidate Pool</span>
             </Button>
-            <Button variant="outline" className="w-full justify-start gap-3" onClick={() => {}}>
+            <Button variant="neutral" className="w-full justify-start gap-3" onClick={() => {}}>
               <Brain className="h-4 w-4" aria-hidden="true" />
               <span>AI Interview Assistant</span>
             </Button>

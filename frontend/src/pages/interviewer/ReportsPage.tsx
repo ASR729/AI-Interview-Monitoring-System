@@ -323,7 +323,7 @@ export function InterviewerReportsPage() {
           <p className="text-surface-600 dark:text-surface-400 mt-1">Review and analyze interview integrity reports</p>
         </div>
         <div className="flex items-center gap-3">
-          <Button variant="outline" className="gap-2">
+          <Button variant="neutral" className="gap-2">
             <Download className="h-4 w-4" aria-hidden="true" />
             Export All
           </Button>
@@ -347,7 +347,7 @@ export function InterviewerReportsPage() {
               />
             </div>
             <div className="flex items-center gap-3 flex-wrap">
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <Select value={statusFilter} onValueChange={setStatusFilter as any}>
                 <SelectTrigger className="w-44">
                   <SelectValue placeholder="All Statuses" />
                 </SelectTrigger>
@@ -358,7 +358,7 @@ export function InterviewerReportsPage() {
                   <SelectItem value="pending_review">Pending Review</SelectItem>
                 </SelectContent>
               </Select>
-              <Select value={dateFilter} onValueChange={setDateFilter}>
+              <Select value={dateFilter} onValueChange={setDateFilter as any}>
                 <SelectTrigger className="w-40">
                   <SelectValue placeholder="All Time" />
                 </SelectTrigger>
@@ -369,7 +369,7 @@ export function InterviewerReportsPage() {
                   <SelectItem value="month">This Month</SelectItem>
                 </SelectContent>
               </Select>
-              <Button variant="outline" size="sm" className="gap-1" onClick={() => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}>
+              <Button variant="neutral" size="sm" className="gap-1" onClick={() => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}>
                 <Filter className="h-4 w-4" aria-hidden="true" />
                 {sortOrder === 'asc' ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
               </Button>
@@ -461,13 +461,13 @@ export function InterviewerReportsPage() {
                       <Dropdown
                         trigger={<Button variant="ghost" size="sm" className="p-2 h-8 w-8"><MoreVertical className="h-4 w-4" aria-hidden="true" /></Button>}
                         items={[
-                          { label: 'View Report', icon: Eye, onClick: () => { setSelectedReport(report); setActiveDetailTab('overview') } },
-                          { label: 'View Alerts', icon: AlertCircle, onClick: () => { setSelectedReport(report); setActiveDetailTab('alerts') } },
-                          { label: 'View Integrity', icon: Brain, onClick: () => { setSelectedReport(report); setActiveDetailTab('integrity') } },
-                          { label: 'View Transcript', icon: FileText, onClick: () => { setSelectedReport(report); setActiveDetailTab('transcript') } },
+                          { label: 'View Report', icon: Eye as any, onClick: () => { setSelectedReport(report); setActiveDetailTab('overview') } },
+                          { label: 'View Alerts', icon: AlertCircle as any, onClick: () => { setSelectedReport(report); setActiveDetailTab('alerts') } },
+                          { label: 'View Integrity', icon: Brain as any, onClick: () => { setSelectedReport(report); setActiveDetailTab('integrity') } },
+                          { label: 'View Transcript', icon: FileText as any, onClick: () => { setSelectedReport(report); setActiveDetailTab('transcript') } },
                           { divider: true },
-                          { label: 'Download PDF', icon: Download, onClick: () => {} },
-                          { label: 'Share Report', icon: Share2, onClick: () => {} },
+                          { label: 'Download PDF', icon: Download as any, onClick: () => {} },
+                          { label: 'Share Report', icon: Share2 as any, onClick: () => {} },
                         ]}
                       />
                     </td>
@@ -492,8 +492,8 @@ export function InterviewerReportsPage() {
               Showing {filteredReports.length} of {mockReports.length} reports
             </p>
             <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" disabled><ChevronLeft className="h-4 w-4" /></Button>
-              <Button variant="outline" size="sm" disabled><ChevronRight className="h-4 w-4" /></Button>
+              <Button variant="neutral" size="sm" disabled><ChevronLeft className="h-4 w-4" /></Button>
+              <Button variant="neutral" size="sm" disabled><ChevronRight className="h-4 w-4" /></Button>
             </div>
           </div>
         </CardFooter>
@@ -523,12 +523,12 @@ export function InterviewerReportsPage() {
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" className="gap-1"><Download className="h-4 w-4" /> PDF</Button>
-                <Button variant="outline" size="sm" className="gap-1"><Share2 className="h-4 w-4" /> Share</Button>
+                <Button variant="neutral" size="sm" className="gap-1"><Download className="h-4 w-4" /> PDF</Button>
+                <Button variant="neutral" size="sm" className="gap-1"><Share2 className="h-4 w-4" /> Share</Button>
               </div>
             </div>
 
-            <Tabs value={activeDetailTab} onValueChange={setActiveDetailTab} className="flex-1 overflow-hidden">
+            <Tabs value={activeDetailTab} onValueChange={setActiveDetailTab as any} className="flex-1 overflow-hidden">
               <TabsList className="border-b border-surface-200 dark:border-surface-800 px-4 bg-surface-50 dark:bg-surface-800/50">
                 <TabsTrigger value="overview" className="px-4">Overview</TabsTrigger>
                 <TabsTrigger value="alerts" className="px-4">Alerts ({selectedReport.alerts})</TabsTrigger>
@@ -645,15 +645,15 @@ export function InterviewerReportsPage() {
                   </CardHeader>
                   <CardContent>
                     <div className="flex flex-wrap gap-3">
-                      <Button variant="outline" className="gap-2" onClick={() => setActiveDetailTab('alerts')}>
+                      <Button variant="neutral" className="gap-2" onClick={() => setActiveDetailTab('alerts')}>
                         <AlertCircle className="h-4 w-4" />
                         Review Alerts ({selectedReport.alerts})
                       </Button>
-                      <Button variant="outline" className="gap-2" onClick={() => setActiveDetailTab('integrity')}>
+                      <Button variant="neutral" className="gap-2" onClick={() => setActiveDetailTab('integrity')}>
                         <Shield className="h-4 w-4" />
                         View Integrity Details
                       </Button>
-                      <Button variant="outline" className="gap-2" onClick={() => setActiveDetailTab('transcript')}>
+                      <Button variant="neutral" className="gap-2" onClick={() => setActiveDetailTab('transcript')}>
                         <FileText className="h-4 w-4" />
                         Read Transcript
                       </Button>
@@ -701,7 +701,7 @@ export function InterviewerReportsPage() {
                                 {alert.acknowledged ? 'Acknowledged' : 'Pending Review'}
                               </Badge>
                               {!alert.acknowledged && (
-                                <Button variant="outline" size="sm" className="gap-1" onClick={() => {}}>
+                                <Button variant="neutral" size="sm" className="gap-1" onClick={() => {}}>
                                   <CheckCircle className="h-3 w-3" />
                                   Acknowledge
                                 </Button>
@@ -766,7 +766,7 @@ export function InterviewerReportsPage() {
                     </div>
                   )}
                   <div className="flex gap-3 pt-4 border-t border-surface-200 dark:border-surface-800">
-                    <Button variant="outline" className="flex-1">Cancel</Button>
+                    <Button variant="neutral" className="flex-1">Cancel</Button>
                     <Button variant="primary" className="flex-1 gap-2">
                       <Save className="h-4 w-4" />
                       Save Notes

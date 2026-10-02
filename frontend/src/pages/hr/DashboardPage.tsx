@@ -207,7 +207,7 @@ export function HRDashboardPage() {
           <p className="text-surface-600 dark:text-surface-400 mt-1">Overview of your hiring pipeline and interview integrity</p>
         </div>
         <div className="flex items-center gap-3">
-          <Button variant="outline" size="sm" className="gap-2">
+          <Button variant="neutral" size="sm" className="gap-2">
             <Filter className="h-4 w-4" aria-hidden="true" />
             <span>Filters</span>
           </Button>
@@ -311,31 +311,31 @@ export function HRDashboardPage() {
             </div>
           </CardHeader>
           <CardContent className="space-y-3">
-            <Button variant="outline" className="w-full justify-start gap-3" asChild>
+            <Button variant="neutral" className="w-full justify-start gap-3" asChild>
               <Link to="/hr/interviews/new">
                 <Plus className="h-4 w-4" aria-hidden="true" />
                 <span>Schedule New Interview</span>
               </Link>
             </Button>
-            <Button variant="outline" className="w-full justify-start gap-3" asChild>
+            <Button variant="neutral" className="w-full justify-start gap-3" asChild>
               <Link to="/hr/candidates/new">
                 <Users className="h-4 w-4" aria-hidden="true" />
                 <span>Add New Candidate</span>
               </Link>
             </Button>
-            <Button variant="outline" className="w-full justify-start gap-3" asChild>
+            <Button variant="neutral" className="w-full justify-start gap-3" asChild>
               <Link to="/hr/reports/new">
                 <FileText className="h-4 w-4" aria-hidden="true" />
                 <span>Generate Report</span>
               </Link>
             </Button>
-            <Button variant="outline" className="w-full justify-start gap-3" asChild>
+            <Button variant="neutral" className="w-full justify-start gap-3" asChild>
               <Link to="/hr/organization/team">
                 <Building2 className="h-4 w-4" aria-hidden="true" />
                 <span>Manage Team</span>
               </Link>
             </Button>
-            <Button variant="outline" className="w-full justify-start gap-3" asChild>
+            <Button variant="neutral" className="w-full justify-start gap-3" asChild>
               <Link to="/hr/settings/integrations">
                 <Shield className="h-4 w-4" aria-hidden="true" />
                 <span>Configure Integrations</span>

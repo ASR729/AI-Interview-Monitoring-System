@@ -1,6 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { ThemeProvider } from '@/hooks/useTheme'
-import { AuthProvider } from '@/hooks/useAuth'
+import { AuthProvider, useAuth } from '@/hooks/useAuth'
 import { ToastContainer } from '@/components/ui/Toast'
 import { useToast } from '@/components/ui/Toast'
 import { PublicLayout } from '@/components/layout/PublicLayout'

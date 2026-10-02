@@ -9,7 +9,7 @@ import {
   Globe,
   Database,
   Webhook,
-  Integration,
+  Puzzle,
   Save,
   Loader2,
   Check,
@@ -146,13 +146,13 @@ export function HRSettingsPage() {
         </Button>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+      <Tabs value={activeTab} onValueChange={setActiveTab as any} className="space-y-4">
         <TabsList className="grid w-full grid-cols-7">
           <TabsTrigger value="profile"><User className="h-4 w-4 mr-2" /> Profile</TabsTrigger>
           <TabsTrigger value="notifications"><Bell className="h-4 w-4 mr-2" /> Notifications</TabsTrigger>
           <TabsTrigger value="security"><Shield className="h-4 w-4 mr-2" /> Security</TabsTrigger>
           <TabsTrigger value="appearance"><Palette className="h-4 w-4 mr-2" /> Appearance</TabsTrigger>
-          <TabsTrigger value="integrations"><Integration className="h-4 w-4 mr-2" /> Integrations</TabsTrigger>
+          <TabsTrigger value="integrations"><Puzzle className="h-4 w-4 mr-2" /> Integrations</TabsTrigger>
           <TabsTrigger value="data"><Database className="h-4 w-4 mr-2" /> Data & Privacy</TabsTrigger>
           <TabsTrigger value="advanced"><TestTube className="h-4 w-4 mr-2" /> Advanced</TabsTrigger>
         </TabsList>
@@ -167,7 +167,7 @@ export function HRSettingsPage() {
               <div className="flex items-center gap-6">
                 <Avatar name={profile.name} size="xl" src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${profile.name}`} />
                 <div className="flex flex-col gap-2">
-                  <Button variant="outline" size="sm">Change Avatar</Button>
+                  <Button variant="neutral" size="sm">Change Avatar</Button>
                   <Button variant="ghost" size="sm" danger>Remove Avatar</Button>
                 </div>
               </div>
@@ -320,13 +320,13 @@ export function HRSettingsPage() {
                   />
                 </div>
                 {!security.twoFAEnabled && (
-                  <Button variant="outline" size="sm" className="gap-2">
+                  <Button variant="neutral" size="sm" className="gap-2">
                     <Key className="h-4 w-4" aria-hidden="true" />
                     Enable 2FA
                   </Button>
                 )}
                 {security.twoFAEnabled && (
-                  <Button variant="outline" size="sm" className="gap-2" danger>
+                  <Button variant="neutral" size="sm" className="gap-2" danger>
                     <RotateCcw className="h-4 w-4" aria-hidden="true" />
                     Reset 2FA
                   </Button>
@@ -368,7 +368,7 @@ export function HRSettingsPage() {
 
               <div className="space-y-4">
                 <h4 className="font-medium text-surface-900 dark:text-surface-50 flex items-center gap-2">
-                  <Integration className="h-5 w-5 text-brand-600" aria-hidden="true" />
+                  <Puzzle className="h-5 w-5 text-brand-600" aria-hidden="true" />
                   API Keys
                 </h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -381,7 +381,7 @@ export function HRSettingsPage() {
                     <div className="input bg-surface-50 dark:bg-surface-800/50 text-surface-900 dark:text-surface-50 font-mono">3 keys active</div>
                   </div>
                 </div>
-                <Button variant="outline" size="sm" className="gap-2">
+                <Button variant="neutral" size="sm" className="gap-2">
                   <Key className="h-4 w-4" aria-hidden="true" />
                   Manage API Keys
                 </Button>
@@ -560,8 +560,8 @@ export function HRSettingsPage() {
                         </div>
                         <Badge variant="neutral">{item.category}</Badge>
                       </div>
-                      <Button variant="outline" size="sm" className="w-full mt-3 gap-2">
-                        <Integration className="h-4 w-4" aria-hidden="true" />
+                      <Button variant="neutral" size="sm" className="w-full mt-3 gap-2">
+                        <Puzzle className="h-4 w-4" aria-hidden="true" />
                         Configure
                       </Button>
                     </Card>
@@ -650,11 +650,11 @@ export function HRSettingsPage() {
                   </div>
                 </div>
                 <div className="flex gap-3">
-                  <Button variant="outline" className="gap-2">
+                  <Button variant="neutral" className="gap-2">
                     <Download className="h-4 w-4" aria-hidden="true" />
                     Export All Data
                   </Button>
-                  <Button variant="outline" className="gap-2">
+                  <Button variant="neutral" className="gap-2">
                     <Cloud className="h-4 w-4" aria-hidden="true" />
                     Request Backup
                   </Button>
@@ -668,11 +668,11 @@ export function HRSettingsPage() {
                 </h4>
                 <p className="text-sm text-surface-600 dark:text-surface-400">These actions are irreversible. Proceed with caution.</p>
                 <div className="flex gap-3">
-                  <Button variant="outline" danger className="gap-2">
+                  <Button variant="neutral" danger className="gap-2">
                     <Trash2 className="h-4 w-4" aria-hidden="true" />
                     Delete My Account
                   </Button>
-                  <Button variant="outline" danger className="gap-2">
+                  <Button variant="neutral" danger className="gap-2">
                     <EyeOff className="h-4 w-4" aria-hidden="true" />
                     Request Data Deletion
                   </Button>
@@ -719,15 +719,15 @@ export function HRSettingsPage() {
                   Reset Options
                 </h4>
                 <div className="flex flex-wrap gap-3">
-                  <Button variant="outline" className="gap-2">
+                  <Button variant="neutral" className="gap-2">
                     <RotateCcw className="h-4 w-4" aria-hidden="true" />
                     Reset to Defaults
                   </Button>
-                  <Button variant="outline" className="gap-2">
+                  <Button variant="neutral" className="gap-2">
                     <HardDrive className="h-4 w-4" aria-hidden="true" />
                     Clear Cache
                   </Button>
-                  <Button variant="outline" className="gap-2">
+                  <Button variant="neutral" className="gap-2">
                     <Database className="h-4 w-4" aria-hidden="true" />
                     Reindex Search
                   </Button>

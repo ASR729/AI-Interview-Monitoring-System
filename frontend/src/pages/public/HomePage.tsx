@@ -191,7 +191,7 @@ export function HomePage() {
                 <Link to="/signup">Start Free Trial</Link>
                 <ArrowRight className="h-5 w-5" aria-hidden="true" />
               </Button>
-              <Button variant="outline" asChild size="lg" className="px-8 py-3">
+              <Button variant="neutral" asChild size="lg" className="px-8 py-3">
                 <Link to="/demo">Watch Demo</Link>
               </Button>
             </div>
@@ -398,7 +398,7 @@ export function HomePage() {
               <Link to="/signup">Start Free Trial</Link>
               <ArrowRight className="h-5 w-5" aria-hidden="true" />
             </Button>
-            <Button variant="outline" asChild size="lg" className="border-white text-white hover:bg-white/10 px-8 py-3">
+            <Button variant="neutral" asChild size="lg" className="border-white text-white hover:bg-white/10 px-8 py-3">
               <Link to="/demo">Schedule Demo</Link>
             </Button>
           </div>

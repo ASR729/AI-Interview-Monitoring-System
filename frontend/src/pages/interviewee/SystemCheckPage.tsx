@@ -33,7 +33,8 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter }
 import { Badge } from '@/components/ui/Badge'
 import { Progress } from '@/components/ui/Progress'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/Tabs'
-import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui/Accordion'
+import { Accordion } from '@/components/ui/Accordion'
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/Select'
 
 interface CheckResult {
   id: string
@@ -342,7 +343,7 @@ export function IntervieweeSystemCheckPage() {
           <p className="text-surface-600 dark:text-surface-400 mt-1">Verify your system meets all requirements for monitored interviews</p>
         </div>
         <div className="flex items-center gap-3">
-          <Button variant="outline" className="gap-2" onClick={runChecks} disabled={isRunning}>
+          <Button variant="neutral" className="gap-2" onClick={runChecks} disabled={isRunning}>
             <RotateCcw className={cn('h-4 w-4', isRunning && 'animate-spin')} aria-hidden="true" />
             {isRunning ? 'Running...' : 'Run Full Check'}
           </Button>
@@ -404,7 +405,7 @@ export function IntervieweeSystemCheckPage() {
                   {allRequiredPassed ? <CheckCircle className="h-3 w-3 mr-1" /> : <XCircle className="h-3 w-3 mr-1" />}
                   {allRequiredPassed ? 'All Required Checks Passed' : 'Required Checks Failed'}
                 </Badge>
-                <Button variant="outline" className="gap-2" onClick={() => {}}>
+                <Button variant="neutral" className="gap-2" onClick={() => {}}>
                   <Download className="h-4 w-4" aria-hidden="true" />
                   Download Report
                 </Button>
@@ -468,7 +469,7 @@ export function IntervieweeSystemCheckPage() {
                 )}
               </Button>
               <Button
-                variant="outline"
+                variant="neutral"
                 className="gap-2 flex-1"
                 onClick={handleMicToggle}
               >
@@ -502,7 +503,7 @@ export function IntervieweeSystemCheckPage() {
                 <CardDescription>Automated verification of your interview readiness</CardDescription>
               </div>
               <div className="flex items-center gap-2">
-                <Tabs value={activeCategory} onValueChange={setActiveCategory} className="hidden sm:flex">
+                <Tabs value={activeCategory} onValueChange={setActiveCategory as any} className="hidden sm:flex">
                   <TabsList>
                     <TabsTrigger value="all">All</TabsTrigger>
                     {Object.entries(categoryInfo).map(([key, info]) => (
@@ -513,7 +514,7 @@ export function IntervieweeSystemCheckPage() {
                     ))}
                   </TabsList>
                 </Tabs>
-                <Select value={activeCategory} onValueChange={setActiveCategory} className="sm:hidden w-40">
+                <Select value={activeCategory} onValueChange={setActiveCategory as any} className="sm:hidden w-40">
                   <SelectTrigger>
                     <SelectValue placeholder="Filter" />
                   </SelectTrigger>
@@ -540,48 +541,50 @@ export function IntervieweeSystemCheckPage() {
 
                 return (
                   <div key={category} className="border-b border-surface-200 dark:border-surface-800 last:border-0">
-                    <Accordion type="single" defaultValue={category}>
-                      <AccordionItem value={category}>
-                        <AccordionTrigger className="px-4 py-3 bg-surface-50 dark:bg-surface-800/50 hover:bg-surface-100 dark:hover:bg-surface-800">
-                          <div className="flex items-center justify-between w-full">
-                            <div className="flex items-center gap-3">
-                              <div className={cn('p-2 rounded-lg', info.bgColor)}>
-                                <info.icon className={cn('h-5 w-5', info.color)} aria-hidden="true" />
-                              </div>
-                              <div>
-                                <p className="font-medium text-surface-900 dark:text-surface-50">{info.label}</p>
-                                <p className="text-xs text-surface-500 dark:text-surface-400">
-                                  {stats.passed}/{stats.total} passed
-                                  {stats.warning > 0 && ` • ${stats.warning} warning${stats.warning > 1 ? 's' : ''}`}
-                                  {stats.failed > 0 && ` • ${stats.failed} failed`}
-                                </p>
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-3">
-                              <Progress value={Math.round((stats.passed / stats.total) * 100)} className="w-32 h-1.5" />
-                              <Badge variant={stats.failed > 0 ? 'danger' : stats.warning > 0 ? 'warning' : 'success'} className="gap-1">
-                                {stats.failed > 0 ? (
-                                  <>
-                                    <XCircle className="h-3 w-3" aria-hidden="true" />
-                                    {stats.failed} failed
-                                  </>
-                                ) : stats.warning > 0 ? (
-                                  <>
-                                    <AlertCircle className="h-3 w-3" aria-hidden="true" />
-                                    {stats.warning} warning{stats.warning > 1 ? 's' : ''}
-                                  </>
-                                ) : (
-                                  <>
-                                    <CheckCircle className="h-3 w-3" aria-hidden="true" />
-                                    All passed
-                                  </>
-                                )}
-                              </Badge>
-                            </div>
+                    <button
+                      onClick={() => setActiveCategory(activeCategory === category ? 'all' : category)}
+                      className="w-full px-4 py-3 bg-surface-50 dark:bg-surface-800/50 hover:bg-surface-100 dark:hover:bg-surface-800 flex items-center justify-between"
+                    >
+                      <div className="flex items-center justify-between w-full">
+                        <div className="flex items-center gap-3">
+                          <div className={cn('p-2 rounded-lg', info.bgColor)}>
+                            <info.icon className={cn('h-5 w-5', info.color)} aria-hidden="true" />
                           </div>
-                        </AccordionTrigger>
-                        <AccordionContent className="px-4 pb-4">
-                          <div className="space-y-3 pt-2">
+                          <div>
+                            <p className="font-medium text-surface-900 dark:text-surface-50">{info.label}</p>
+                            <p className="text-xs text-surface-500 dark:text-surface-400">
+                              {stats.passed}/{stats.total} passed
+                              {stats.warning > 0 && ` • ${stats.warning} warning${stats.warning > 1 ? 's' : ''}`}
+                              {stats.failed > 0 && ` • ${stats.failed} failed`}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <Progress value={Math.round((stats.passed / stats.total) * 100)} className="w-32 h-1.5" />
+                          <Badge variant={stats.failed > 0 ? 'danger' : stats.warning > 0 ? 'warning' : 'success'} className="gap-1">
+                            {stats.failed > 0 ? (
+                              <>
+                                <XCircle className="h-3 w-3" aria-hidden="true" />
+                                {stats.failed} failed
+                              </>
+                            ) : stats.warning > 0 ? (
+                              <>
+                                <AlertCircle className="h-3 w-3" aria-hidden="true" />
+                                {stats.warning} warning{stats.warning > 1 ? 's' : ''}
+                              </>
+                            ) : (
+                              <>
+                                <CheckCircle className="h-3 w-3" aria-hidden="true" />
+                                All passed
+                              </>
+                            )}
+                          </Badge>
+                        </div>
+                      </div>
+                    </button>
+                    {activeCategory === category && (
+                      <div className="px-4 pb-4">
+                        <div className="space-y-3 pt-2">
                             {catChecks.map((check, index) => {
                               const result = mockResults[check.id as keyof typeof mockResults]
                               const config = statusConfig[check.status]
@@ -603,7 +606,7 @@ export function IntervieweeSystemCheckPage() {
                                     <div className="flex items-center gap-2">
                                       <p className="font-medium text-surface-900 dark:text-surface-50 truncate">{check.name}</p>
                                       {check.required && (
-                                        <Badge variant="outline" size="xs">Required</Badge>
+                                        <Badge variant="neutral" size="sm">Required</Badge>
                                       )}
                                     </div>
                                     <p className="text-sm text-surface-500 dark:text-surface-400">{check.description}</p>
@@ -637,9 +640,8 @@ export function IntervieweeSystemCheckPage() {
                               )
                             })}
                           </div>
-                        </AccordionContent>
-                      </AccordionItem>
-                    </Accordion>
+                        </div>
+                    )}
                   </div>
                 )
               })}
@@ -705,7 +707,7 @@ export function IntervieweeSystemCheckPage() {
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
                       <h4 className="font-medium text-surface-900 dark:text-surface-50">{item.title}</h4>
-                      <Badge variant={item.status === 'enhanced' ? 'warning' : 'neutral'} size="xs">
+                      <Badge variant={item.status === 'enhanced' ? 'warning' : 'neutral'} size="sm">
                         {item.status === 'enhanced' ? 'Enhanced' : 'Standard'}
                       </Badge>
                     </div>

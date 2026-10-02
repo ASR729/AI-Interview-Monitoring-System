@@ -5,8 +5,9 @@ import { ChevronDown, Check } from 'lucide-react'
 export type DropdownItem =
   | {
       label: string
-      value: string
+      value?: string
       icon?: ReactNode
+      onClick?: () => void
       disabled?: boolean
       danger?: boolean
       divider?: false
@@ -16,6 +17,7 @@ export type DropdownItem =
       label?: never
       value?: never
       icon?: never
+      onClick?: never
       disabled?: never
       danger?: never
     }
@@ -51,7 +53,11 @@ export function Dropdown({ trigger, items, onSelect, align = 'right', className 
 
   const handleItemClick = (item: DropdownItem) => {
     if (!item.disabled && !item.divider) {
-      onSelect?.(item.value)
+      if (item.onClick) {
+        item.onClick()
+      } else if (item.value) {
+        onSelect?.(item.value)
+      }
       setIsOpen(false)
     }
   }
@@ -127,7 +133,11 @@ export function Dropdown({ trigger, items, onSelect, align = 'right', className 
                   item.disabled && 'opacity-50 pointer-events-none'
                 )}
               >
-                {item.icon && <span className="flex-shrink-0 h-4 w-4">{item.icon}</span>}
+                {item.icon && (
+                  <span className="flex-shrink-0 h-4 w-4">
+                    {typeof item.icon === 'function' ? <item.icon className="h-4 w-4" /> : item.icon}
+                  </span>
+                )}
                 <span className="flex-1">{item.label}</span>
               </button>
             )

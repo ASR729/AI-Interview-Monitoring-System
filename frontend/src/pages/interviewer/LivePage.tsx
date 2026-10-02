@@ -18,7 +18,7 @@ import {
   Users,
   Zap,
   Settings,
-  RecordCircle,
+  Circle,
   StopCircle,
   PauseCircle,
   MessageSquare,
@@ -32,6 +32,7 @@ import {
   Cpu,
   HardDrive,
   Clock,
+  Save,
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/Card'
@@ -230,7 +231,7 @@ export function InterviewerLivePage() {
 
                 {isRecording && !isPaused && (
                   <div className="absolute top-4 left-4 flex items-center gap-1 px-2 py-1 bg-danger-600/90 rounded-full animate-pulse">
-                    <RecordCircle className="h-4 w-4 text-white" aria-hidden="true" />
+                    <Circle className="h-4 w-4 text-white" aria-hidden="true" />
                     <span className="text-xs font-medium text-white">REC</span>
                     <span className="text-xs font-mono text-white">{formatTime(sessionTime)}</span>
                   </div>
@@ -260,12 +261,12 @@ export function InterviewerLivePage() {
                       </>
                     ) : isPaused ? (
                       <>
-                        <RecordCircle className="h-5 w-5 animate-pulse" aria-hidden="true" />
+                        <Circle className="h-5 w-5 animate-pulse" aria-hidden="true" />
                         Resume Recording
                       </>
                     ) : (
                       <>
-                        <RecordCircle className="h-5 w-5" aria-hidden="true" />
+                        <Circle className="h-5 w-5" aria-hidden="true" />
                         Start Recording
                       </>
                     )}
@@ -278,17 +279,17 @@ export function InterviewerLivePage() {
                     onClick={handleToggleRecording}
                     disabled={!isRecording}
                   >
-                    {isPaused ? <RecordCircle className="h-5 w-5" /> : <PauseCircle className="h-5 w-5" />}
+                    {isPaused ? <Circle className="h-5 w-5" /> : <PauseCircle className="h-5 w-5" />}
                     {isPaused ? 'Resume' : 'Pause'}
                   </Button>
                 </div>
 
-                <Button variant="outline" size="lg" className={cn('gap-2', isMuted ? 'bg-danger-900/50 text-danger-400 border-danger-900/50' : '')} onClick={() => setIsMuted(!isMuted)}>
+                <Button variant="neutral" size="lg" className={cn('gap-2', isMuted ? 'bg-danger-900/50 text-danger-400 border-danger-900/50' : '')} onClick={() => setIsMuted(!isMuted)}>
                   {isMuted ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
                   {isMuted ? 'Unmute' : 'Mute'}
                 </Button>
 
-                <Button variant="outline" size="lg" className={cn('gap-2', isVideoOff ? 'bg-danger-900/50 text-danger-400 border-danger-900/50' : '')} onClick={() => setIsVideoOff(!isVideoOff)}>
+                <Button variant="neutral" size="lg" className={cn('gap-2', isVideoOff ? 'bg-danger-900/50 text-danger-400 border-danger-900/50' : '')} onClick={() => setIsVideoOff(!isVideoOff)}>
                   {isVideoOff ? <Video className="h-5 w-5" /> : <Video className="h-5 w-5" />}
                   {isVideoOff ? 'Video On' : 'Video Off'}
                 </Button>
@@ -300,7 +301,7 @@ export function InterviewerLivePage() {
                 <CardHeader className="pb-2">
                   <div className="flex items-center justify-between">
                     <CardTitle className="text-sm">Monitoring Panel</CardTitle>
-                    <Tabs value={activeTab} onValueChange={setActiveTab} className="ml-auto">
+                    <Tabs value={activeTab} onValueChange={setActiveTab as any} className="ml-auto">
                       <TabsList className="grid grid-cols-4 bg-surface-800 p-1 rounded-lg">
                         <TabsTrigger value="monitoring" className="text-xs py-1">Monitor</TabsTrigger>
                         <TabsTrigger value="alerts" className="text-xs py-1">Alerts</TabsTrigger>
@@ -398,7 +399,7 @@ export function InterviewerLivePage() {
                         placeholder="Add private notes about this interview..."
                       />
                       <div className="flex gap-2">
-                        <Button variant="outline" size="sm" className="flex-1 gap-1">
+                        <Button variant="neutral" size="sm" className="flex-1 gap-1">
                           <Download className="h-3 w-3" aria-hidden="true" />
                           Export Notes
                         </Button>

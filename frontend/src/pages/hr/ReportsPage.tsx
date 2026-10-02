@@ -222,7 +222,7 @@ export function HRReportsPage() {
         </Button>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+      <Tabs value={activeTab} onValueChange={setActiveTab as any} className="space-y-4">
         <TabsList className="w-auto">
           <TabsTrigger value="reports">Generated Reports ({stats.completed})</TabsTrigger>
           <TabsTrigger value="templates">Report Templates ({templates.length})</TabsTrigger>
@@ -282,7 +282,7 @@ export function HRReportsPage() {
                     />
                   </div>
                   <div className="flex items-center gap-2 flex-wrap">
-                    <Button variant="outline" size="sm" className="gap-2" onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}>
+                    <Button variant="neutral" size="sm" className="gap-2" onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}>
                       <Filter className="h-4 w-4" aria-hidden="true" />
                       <span>Sort: {sortBy}</span>
                       {sortOrder === 'asc' ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
@@ -372,7 +372,7 @@ export function HRReportsPage() {
                           <FileText className="h-4 w-4" aria-hidden="true" />
                           Generate
                         </Button>
-                        <Button variant="outline" className="flex-1 gap-2" size="sm">
+                        <Button variant="neutral" className="flex-1 gap-2" size="sm">
                           <Edit className="h-4 w-4" aria-hidden="true" />
                           Customize
                         </Button>
@@ -457,14 +457,14 @@ export function HRReportsPage() {
             </div>
 
             <div className="flex justify-end gap-3 pt-4 border-t border-surface-200 dark:border-surface-800">
-              <Button variant="outline" onClick={() => setSelectedReport(null)}>Close</Button>
+              <Button variant="neutral" onClick={() => setSelectedReport(null)}>Close</Button>
               {selectedReport.status === 'completed' && (
                 <>
-                  <Button variant="outline" asChild>
+                  <Button variant="neutral" asChild>
                     <Download className="h-4 w-4" aria-hidden="true" />
                     <a href="#" download>Download PDF</a>
                   </Button>
-                  <Button variant="outline">
+                  <Button variant="neutral">
                     <Share2 className="h-4 w-4 mr-2" aria-hidden="true" />
                     Share
                   </Button>
@@ -535,7 +535,7 @@ export function HRReportsPage() {
           </div>
 
           <div className="flex justify-end gap-3 pt-4 border-t border-surface-200 dark:border-surface-800">
-            <Button variant="outline" type="button" onClick={() => setShowGenerateModal(false)}>Cancel</Button>
+            <Button variant="neutral" type="button" onClick={() => setShowGenerateModal(false)}>Cancel</Button>
             <Button type="submit">Generate Report</Button>
           </div>
         </form>

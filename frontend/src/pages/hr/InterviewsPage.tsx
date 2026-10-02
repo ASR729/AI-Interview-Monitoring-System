@@ -20,7 +20,7 @@ import {
   Mic,
   Monitor,
   ArrowRight,
-  Funnel,
+  Filter,
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/Card'
@@ -250,8 +250,8 @@ export function HRInterviewsPage() {
               />
             </div>
             <div className="flex items-center gap-2 flex-wrap">
-              <Button variant="outline" size="sm" className="gap-2" onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}>
-                <Funnel className="h-4 w-4" aria-hidden="true" />
+              <Button variant="neutral" size="sm" className="gap-2" onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}>
+                <Filter className="h-4 w-4" aria-hidden="true" />
                 <span>Sort: {sortBy}</span>
                 {sortOrder === 'asc' ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
               </Button>
@@ -387,7 +387,7 @@ export function HRInterviewsPage() {
             </div>
 
             <div className="flex justify-end gap-3 pt-4 border-t border-surface-200 dark:border-surface-800">
-              <Button variant="outline" onClick={() => setSelectedInterview(null)}>Close</Button>
+              <Button variant="neutral" onClick={() => setSelectedInterview(null)}>Close</Button>
               {selectedInterview.status === 'in_progress' && (
                 <Button variant="primary" asChild className="gap-2">
                   <Video className="h-4 w-4" aria-hidden="true" />
@@ -395,13 +395,13 @@ export function HRInterviewsPage() {
                 </Button>
               )}
               {selectedInterview.recordingUrl && (
-                <Button variant="outline" asChild>
+                <Button variant="neutral" asChild>
                   <Monitor className="h-4 w-4" aria-hidden="true" />
                   <Link href={selectedInterview.recordingUrl}>View Recording</Link>
                 </Button>
               )}
               {selectedInterview.reportUrl && (
-                <Button variant="outline" asChild>
+                <Button variant="neutral" asChild>
                   <Download className="h-4 w-4" aria-hidden="true" />
                   <Link href={selectedInterview.reportUrl}>Download Report</Link>
                 </Button>
@@ -468,7 +468,7 @@ export function HRInterviewsPage() {
             </div>
           </div>
           <div className="flex justify-end gap-3 pt-4 border-t border-surface-200 dark:border-surface-800">
-            <Button variant="outline" type="button" onClick={() => setShowScheduleModal(false)}>Cancel</Button>
+            <Button variant="neutral" type="button" onClick={() => setShowScheduleModal(false)}>Cancel</Button>
             <Button type="submit">Schedule Interview</Button>
           </div>
         </form>

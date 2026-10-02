@@ -78,22 +78,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsLoading(true)
     await new Promise((resolve) => setTimeout(resolve, 800))
 
-    const mockUser = MOCK_USERS[email]
-    if (mockUser && mockUser.role === role) {
-      setUser(mockUser)
-      localStorage.setItem('user', JSON.stringify(mockUser))
-      setIsLoading(false)
-      return
-    }
-
-    const newUser: User = {
-      id: crypto.randomUUID(),
+    const mockUser = MOCK_USERS[email] || {
+      id: Math.random().toString(36),
       name: email.split('@')[0],
       email,
       role,
       avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${email}`,
-      status: 'online',
+      status: 'online' as const,
     }
+
+    setUser(mockUser)
+    localStorage.setItem('user', JSON.stringify(mockUser))
+    setIsLoading(false)
+  }, [])
+
+  const register = useCallback(async (data: RegisterData) => {
+    setIsLoading(true)
+    await new Promise((resolve) => setTimeout(resolve, 1000))
+
+    const newUser: User = {
+      id: Math.random().toString(36),
+      name: data.name,
+      email: data.email,
+      role: data.role,
+      avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${data.email}`,
+      status: 'online',
+      organizationId: data.organizationName ? `org-${Math.random().toString(36)}` : undefined,
+    }
+
     setUser(newUser)
     localStorage.setItem('user', JSON.stringify(newUser))
     setIsLoading(false)
@@ -104,44 +116,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem('user')
   }, [])
 
-  const register = useCallback(async (data: RegisterData) => {
-    setIsLoading(true)
-    await new Promise((resolve) => setTimeout(resolve, 1000))
+  const value: AuthContextType = {
+    user,
+    isLoading,
+    isAuthenticated: !!user,
+    login,
+    logout,
+    register,
+  }
 
-    const newUser: User = {
-      id: crypto.randomUUID(),
-      name: data.name,
-      email: data.email,
-      role: data.role,
-      avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${data.email}`,
-      status: 'online',
-      organizationId: data.organizationName ? `org-${crypto.randomUUID()}` : undefined,
-    }
-    setUser(newUser)
-    localStorage.setItem('user', JSON.stringify(newUser))
-    setIsLoading(false)
-  }, [])
-
-  return (
-    <AuthContext.Provider
-      value={{
-        user,
-        isLoading,
-        isAuthenticated: !!user,
-        login,
-        logout,
-        register,
-      }}
-    >
-      {children}
-    </AuthContext.Provider>
-  )
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
 
-export function useAuth() {
+export function useAuth(): AuthContextType {
   const context = useContext(AuthContext)
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider')
+  if (context === undefined) {
+    throw new Error('useAuth must be used within AuthProvider')
   }
   return context
 }

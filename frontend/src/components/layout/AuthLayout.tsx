@@ -1,7 +1,7 @@
 import { ReactNode } from 'react'
 import { Outlet, Link } from 'react-router-dom'
 import { cn } from '@/lib/utils'
-import { Monitor, Sun, Moon, ArrowLeft } from 'lucide-react'
+import { Monitor, Sun, Moon, ArrowLeft, Sparkles, Shield, BarChart2 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { useTheme } from '@/hooks/useTheme'
 
@@ -95,6 +95,3 @@ export function AuthLayout() {
     </div>
   )
 }
-
-import { useState } from 'react'
-import { Sparkles, Shield, BarChart2, Monitor } from 'lucide-react'

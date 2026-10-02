@@ -27,14 +27,10 @@ import {
   Target,
   BookOpen,
   Headphones,
-  Mic,
   Settings,
   BarChart2,
   PieChart,
   LineChart,
-  Trophy,
-  Medal,
-  Flag,
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/Card'
@@ -44,9 +40,7 @@ import { Progress } from '@/components/ui/Progress'
 import { Dropdown } from '@/components/ui/Dropdown'
 import { Input } from '@/components/ui/Input'
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/Select'
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/Table'
 import { Pagination } from '@/components/ui/Pagination'
-import { Modal, ModalHeader, ModalTitle, ModalContent, ModalFooter } from '@/components/ui/Modal'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/Tabs'
 import { Separator } from '@/components/ui/Separator'
 import { useAuth } from '@/hooks/useAuth'
@@ -316,15 +310,15 @@ export function IntervieweeHistoryPage() {
           <p className="text-surface-600 dark:text-surface-400 mt-1">Your complete interview history and performance analytics</p>
         </div>
         <div className="flex items-center gap-3">
-          <Button variant="outline" className="gap-2" onClick={handleRefresh}>
+          <Button variant="neutral" className="gap-2" onClick={handleRefresh}>
             <RefreshCw className="h-4 w-4" aria-hidden="true" />
             Refresh
           </Button>
-          <Button variant="outline" className="gap-2" onClick={handleExport}>
+          <Button variant="neutral" className="gap-2" onClick={handleExport}>
             <Download className="h-4 w-4" aria-hidden="true" />
             Export
           </Button>
-          <Button variant="outline" className="gap-2" onClick={() => setViewMode(v => v === 'table' ? 'cards' : 'table')}>
+          <Button variant="neutral" className="gap-2" onClick={() => setViewMode(v => v === 'table' ? 'cards' : 'table')}>
             {viewMode === 'table' ? (
               <>
                 <LayoutGrid className="h-4 w-4" aria-hidden="true" />
@@ -477,7 +471,7 @@ export function IntervieweeHistoryPage() {
                   ))}
                 </SelectContent>
               </Select>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <Select value={statusFilter} onValueChange={setStatusFilter as any}>
                 <SelectTrigger className="w-[150px]">
                   <SelectValue placeholder="All Status" />
                 </SelectTrigger>
@@ -603,7 +597,7 @@ export function IntervieweeHistoryPage() {
                         </TableCell>
                         <TableCell>
                           {interview.stage && (
-                            <Badge variant="outline" className="gap-1">
+                            <Badge variant="neutral" className="gap-1">
                               {(() => {
                                 const Icon = getStageConfig(interview.stage).icon
                                 return Icon ? <Icon className="h-3 w-3" aria-hidden="true" /> : null
@@ -687,7 +681,7 @@ export function IntervieweeHistoryPage() {
                     <p className="text-sm text-surface-500 dark:text-surface-400 truncate">{interview.role}</p>
                     <p className="text-xs text-surface-400 dark:text-surface-500">{getTypeLabel(interview.type)}</p>
                     {interview.stage && (
-                      <Badge variant="outline" size="xs" className="mt-1 gap-1">
+                      <Badge variant="neutral" size="sm" className="mt-1 gap-1">
                         {(() => {
                           const Icon = getStageConfig(interview.stage).icon
                           return Icon ? <Icon className="h-2.5 w-2.5" aria-hidden="true" /> : null
@@ -723,7 +717,7 @@ export function IntervieweeHistoryPage() {
                     {interview.offer && (
                       <div className="flex items-center gap-2">
                         <Medal className="h-4 w-4 fill-emerald-500 text-emerald-500" aria-hidden="true" />
-                        <Badge variant="success" size="xs">Offer Received</Badge>
+                        <Badge variant="success" size="sm">Offer Received</Badge>
                       </div>
                     )}
                   </div>
@@ -776,7 +770,7 @@ export function IntervieweeHistoryPage() {
         description={`Details for ${selectedInterview?.company}`}
       >
         {selectedInterview && (
-          <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <Tabs value={activeTab} onValueChange={setActiveTab as any}>
             <TabsList className="grid w-full grid-cols-5">
               <TabsTrigger value="overview">Overview</TabsTrigger>
               <TabsTrigger value="integrity">Integrity</TabsTrigger>
@@ -835,7 +829,7 @@ export function IntervieweeHistoryPage() {
                         <p className="text-surface-500 dark:text-surface-400">Stage</p>
                         <p className="font-medium text-surface-900 dark:text-surface-50">
                           {selectedInterview.stage && (
-                            <Badge variant="outline" className="gap-1">
+                            <Badge variant="neutral" className="gap-1">
                               {(() => {
                                 const Icon = getStageConfig(selectedInterview.stage).icon;
                                 return Icon ? <Icon className="h-3 w-3" aria-hidden="true" /> : null;
@@ -909,18 +903,18 @@ export function IntervieweeHistoryPage() {
                     <h4 className="font-medium text-surface-900 dark:text-surface-50 mb-3">Quick Actions</h4>
                     <div className="space-y-2">
                       {selectedInterview.report && (
-                        <Button variant="outline" className="w-full justify-start gap-2" onClick={() => handleDownloadReport(selectedInterview)}>
+                        <Button variant="neutral" className="w-full justify-start gap-2" onClick={() => handleDownloadReport(selectedInterview)}>
                           <FileText className="h-4 w-4" aria-hidden="true" />
                           Download Report
                         </Button>
                       )}
                       {selectedInterview.recording && (
-                        <Button variant="outline" className="w-full justify-start gap-2" onClick={() => handleDownloadRecording(selectedInterview)}>
+                        <Button variant="neutral" className="w-full justify-start gap-2" onClick={() => handleDownloadRecording(selectedInterview)}>
                           <Video className="h-4 w-4" aria-hidden="true" />
                           Download Recording
                         </Button>
                       )}
-                      <Button variant="outline" className="w-full justify-start gap-2" onClick={() => {}}>
+                      <Button variant="neutral" className="w-full justify-start gap-2" onClick={() => {}}>
                         <Shield className="h-4 w-4" aria-hidden="true" />
                         View Monitoring Details
                       </Button>
@@ -984,7 +978,7 @@ export function IntervieweeHistoryPage() {
                     <p className="text-lg font-medium">Recording Player</p>
                     <p className="text-sm mt-2">Video playback would be implemented here</p>
                     <div className="mt-4 flex items-center justify-center gap-4">
-                      <Button variant="outline" size="sm" className="bg-white/10 border-white/20 text-white">
+                      <Button variant="neutral" size="sm" className="bg-white/10 border-white/20 text-white">
                         <Download className="h-4 w-4 mr-2" aria-hidden="true" />
                         Download
                       </Button>
@@ -1042,7 +1036,7 @@ export function IntervieweeHistoryPage() {
                 </div>
               </div>
               <div className="flex justify-end gap-3">
-                <Button variant="outline" onClick={() => handleDownloadReport(selectedInterview)}>
+                <Button variant="neutral" onClick={() => handleDownloadReport(selectedInterview)}>
                   <Download className="h-4 w-4 mr-2" aria-hidden="true" />
                   Download PDF
                 </Button>
@@ -1058,7 +1052,3 @@ export function IntervieweeHistoryPage() {
     </div>
   )
 }
-
-// Need to import missing icons and components
-import { Users, Cpu, Play, Share2, Mic, LayoutGrid, List } from 'lucide-react'
-import { Separator } from '@/components/ui/Separator'

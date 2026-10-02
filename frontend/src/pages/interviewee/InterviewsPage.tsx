@@ -30,9 +30,7 @@ import { Progress } from '@/components/ui/Progress'
 import { Dropdown } from '@/components/ui/Dropdown'
 import { Input } from '@/components/ui/Input'
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/Select'
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableCaption } from '@/components/ui/Table'
 import { Pagination } from '@/components/ui/Pagination'
-import { Modal, ModalHeader, ModalTitle, ModalContent, ModalFooter } from '@/components/ui/Modal'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/Tabs'
 import { useAuth } from '@/hooks/useAuth'
 
@@ -186,11 +184,11 @@ export function IntervieweeInterviewsPage() {
           <p className="text-surface-600 dark:text-surface-400 mt-1">View and manage your interview history</p>
         </div>
         <div className="flex items-center gap-3">
-          <Button variant="outline" className="gap-2" onClick={handleRefresh}>
+          <Button variant="neutral" className="gap-2" onClick={handleRefresh}>
             <RefreshCw className="h-4 w-4" aria-hidden="true" />
             Refresh
           </Button>
-          <Button variant="outline" className="gap-2" onClick={handleExport}>
+          <Button variant="neutral" className="gap-2" onClick={handleExport}>
             <Download className="h-4 w-4" aria-hidden="true" />
             Export
           </Button>
@@ -210,7 +208,7 @@ export function IntervieweeInterviewsPage() {
               />
             </div>
             <div className="flex flex-wrap items-center gap-3">
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <Select value={statusFilter} onValueChange={setStatusFilter as any}>
                 <SelectTrigger className="w-[180px]">
                   <SelectValue placeholder="All Status" />
                 </SelectTrigger>
@@ -395,7 +393,7 @@ export function IntervieweeInterviewsPage() {
         description={`Details for ${selectedInterview?.company}`}
       >
         {selectedInterview && (
-          <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <Tabs value={activeTab} onValueChange={setActiveTab as any}>
             <TabsList className="grid w-full grid-cols-5">
               <TabsTrigger value="overview">Overview</TabsTrigger>
               <TabsTrigger value="integrity">Integrity</TabsTrigger>
@@ -491,18 +489,18 @@ export function IntervieweeInterviewsPage() {
                     <h4 className="font-medium text-surface-900 dark:text-surface-50 mb-3">Quick Actions</h4>
                     <div className="space-y-2">
                       {selectedInterview.report && (
-                        <Button variant="outline" className="w-full justify-start gap-2" onClick={() => handleDownloadReport(selectedInterview)}>
+                        <Button variant="neutral" className="w-full justify-start gap-2" onClick={() => handleDownloadReport(selectedInterview)}>
                           <FileText className="h-4 w-4" aria-hidden="true" />
                           Download Report
                         </Button>
                       )}
                       {selectedInterview.recording && (
-                        <Button variant="outline" className="w-full justify-start gap-2" onClick={() => handleDownloadRecording(selectedInterview)}>
+                        <Button variant="neutral" className="w-full justify-start gap-2" onClick={() => handleDownloadRecording(selectedInterview)}>
                           <Video className="h-4 w-4" aria-hidden="true" />
                           Download Recording
                         </Button>
                       )}
-                      <Button variant="outline" className="w-full justify-start gap-2" onClick={() => {}}>
+                      <Button variant="neutral" className="w-full justify-start gap-2" onClick={() => {}}>
                         <Shield className="h-4 w-4" aria-hidden="true" />
                         View Monitoring Details
                       </Button>
@@ -566,7 +564,7 @@ export function IntervieweeInterviewsPage() {
                     <p className="text-lg font-medium">Recording Player</p>
                     <p className="text-sm mt-2">Video playback would be implemented here</p>
                     <div className="mt-4 flex items-center justify-center gap-4">
-                      <Button variant="outline" size="sm" className="bg-white/10 border-white/20 text-white">
+                      <Button variant="neutral" size="sm" className="bg-white/10 border-white/20 text-white">
                         <Download className="h-4 w-4 mr-2" aria-hidden="true" />
                         Download
                       </Button>
@@ -622,7 +620,7 @@ export function IntervieweeInterviewsPage() {
                 </div>
               </div>
               <div className="flex justify-end gap-3">
-                <Button variant="outline" onClick={() => handleDownloadReport(selectedInterview)}>
+                <Button variant="neutral" onClick={() => handleDownloadReport(selectedInterview)}>
                   <Download className="h-4 w-4 mr-2" aria-hidden="true" />
                   Download PDF
                 </Button>

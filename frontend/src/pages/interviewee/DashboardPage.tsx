@@ -157,7 +157,7 @@ export function IntervieweeDashboardPage() {
           <p className="text-surface-600 dark:text-surface-400 mt-1">Welcome back, {user?.name || 'Candidate'}. Track your interviews and preparation progress.</p>
         </div>
         <div className="flex items-center gap-3">
-          <Button variant="outline" className="gap-2" onClick={() => {}}>
+          <Button variant="neutral" className="gap-2" onClick={() => {}}>
             <Settings className="h-4 w-4" aria-hidden="true" />
             Interview Settings
           </Button>
@@ -278,12 +278,12 @@ export function IntervieweeDashboardPage() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between">
                     <p className={cn('font-medium text-surface-900 dark:text-surface-50', step.completed ? 'line-through text-surface-400' : '')}>{step.label}</p>
-                    {step.required && <Badge variant="outline" size="xs">Required</Badge>}
+                    {step.required && <Badge variant="neutral" size="sm">Required</Badge>}
                   </div>
                   <p className="text-xs text-surface-500 dark:text-surface-400">{step.desc}</p>
                 </div>
                 {!step.completed && (
-                  <Button variant="outline" size="sm" className="gap-1" onClick={() => success('Step Started', `Opening ${step.label}...`)}>
+                  <Button variant="neutral" size="sm" className="gap-1" onClick={() => success('Step Started', `Opening ${step.label}...`)}>
                     {step.id === 'system_check' ? <ExternalLink className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
                     {step.id === 'system_check' ? 'Run' : 'Start'}
                   </Button>
@@ -353,7 +353,7 @@ export function IntervieweeDashboardPage() {
             </div>
           </CardContent>
           <CardFooter className="border-t border-surface-200 dark:border-surface-800">
-            <Button variant="outline" className="w-full gap-1" onClick={() => {}}>
+            <Button variant="neutral" className="w-full gap-1" onClick={() => {}}>
               <FileText className="h-4 w-4" aria-hidden="true" />
               View All Reports
             </Button>
@@ -390,19 +390,19 @@ export function IntervieweeDashboardPage() {
             <Separator />
 
             <div className="space-y-3">
-              <Button variant="outline" className="w-full justify-start gap-3" onClick={() => {}}>
+              <Button variant="neutral" className="w-full justify-start gap-3" onClick={() => {}}>
                 <BookOpen className="h-4 w-4" aria-hidden="true" />
                 <span>Interview Guides & Resources</span>
               </Button>
-              <Button variant="outline" className="w-full justify-start gap-3" onClick={() => {}}>
+              <Button variant="neutral" className="w-full justify-start gap-3" onClick={() => {}}>
                 <Headphones className="h-4 w-4" aria-hidden="true" />
                 <span>Practice Questions</span>
               </Button>
-              <Button variant="outline" className="w-full justify-start gap-3" onClick={() => {}}>
+              <Button variant="neutral" className="w-full justify-start gap-3" onClick={() => {}}>
                 <Video className="h-4 w-4" aria-hidden="true" />
                 <span>Mock Interview Practice</span>
               </Button>
-              <Button variant="outline" className="w-full justify-start gap-3" onClick={() => {}}>
+              <Button variant="neutral" className="w-full justify-start gap-3" onClick={() => {}}>
                 <Shield className="h-4 w-4" aria-hidden="true" />
                 <span>Monitoring Guidelines</span>
               </Button>

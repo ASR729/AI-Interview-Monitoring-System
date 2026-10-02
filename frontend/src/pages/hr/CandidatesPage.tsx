@@ -21,7 +21,7 @@ import {
   Download,
   Building2,
   UserPlus,
-  Funnel,
+  Filter,
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/Card'
@@ -185,8 +185,8 @@ export function HRCandidatesPage() {
               />
             </div>
             <div className="flex items-center gap-2 flex-wrap">
-              <Button variant="outline" size="sm" className="gap-2" onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}>
-                <Funnel className="h-4 w-4" aria-hidden="true" />
+              <Button variant="neutral" size="sm" className="gap-2" onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}>
+                <Filter className="h-4 w-4" aria-hidden="true" />
                 <span>Sort: {sortBy}</span>
                 {sortOrder === 'asc' ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
               </Button>
@@ -274,7 +274,7 @@ export function HRCandidatesPage() {
             </div>
 
             <div className="flex justify-end gap-3 pt-4 border-t border-surface-200 dark:border-surface-800">
-              <Button variant="outline" onClick={() => setSelectedCandidate(null)}>Close</Button>
+              <Button variant="neutral" onClick={() => setSelectedCandidate(null)}>Close</Button>
               <Button variant="primary" onClick={() => setSelectedCandidate(null)}>Schedule Interview</Button>
             </div>
           </div>
@@ -304,7 +304,7 @@ export function HRCandidatesPage() {
             <option value="Offer Extended">Offer Extended</option>
           </select>
           <div className="flex justify-end gap-3 pt-4 border-t border-surface-200 dark:border-surface-800">
-            <Button variant="outline" type="button" onClick={() => setShowAddModal(false)}>Cancel</Button>
+            <Button variant="neutral" type="button" onClick={() => setShowAddModal(false)}>Cancel</Button>
             <Button type="submit">Add Candidate</Button>
           </div>
         </form>

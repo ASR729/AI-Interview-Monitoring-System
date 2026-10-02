@@ -64,7 +64,7 @@ export function AccessDeniedPage() {
             <div className="flex flex-col sm:flex-row gap-3 pt-2">
               {user ? (
                 <>
-                  <Button variant="outline" asChild className="flex-1">
+                  <Button variant="neutral" asChild className="flex-1">
                     <Link to="/signin">Switch Account</Link>
                   </Button>
                   <Button variant="secondary" onClick={logout} className="flex-1">

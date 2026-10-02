@@ -122,8 +122,9 @@ export function InterviewerInterviewsPage() {
     }
 
     result.sort((a, b) => {
-      let aVal: string | number | Date = a[sortBy]
-      let bVal: string | number | Date = b[sortBy]
+      let aVal: string | number | Date | null = a[sortBy as keyof typeof a]
+      let bVal: string | number | Date | null = b[sortBy as keyof typeof b]
+
       if (sortBy === 'date') {
         aVal = new Date(a.date).getTime()
         bVal = new Date(b.date).getTime()
@@ -132,10 +133,15 @@ export function InterviewerInterviewsPage() {
         aVal = a.integrityScore ?? -1
         bVal = b.integrityScore ?? -1
       }
-      if (typeof aVal === 'string') {
+
+      if (typeof aVal === 'string' && typeof bVal === 'string') {
         aVal = aVal.toLowerCase()
         bVal = bVal.toLowerCase()
       }
+
+      if (aVal === null || aVal === undefined) aVal = ''
+      if (bVal === null || bVal === undefined) bVal = ''
+
       return sortOrder === 'asc'
         ? aVal > bVal ? 1 : -1
         : aVal < bVal ? 1 : -1
@@ -229,8 +235,8 @@ export function InterviewerInterviewsPage() {
         }
         align="right"
         items={[
-          { label: 'View Details', value: 'view', icon: <Eye className="h-4 w-4" />, onSelect: () => setSelectedInterview(row) },
-          { label: row.status === 'live' ? 'Monitor Live' : row.status === 'scheduled' ? 'Join Interview' : 'View Recording', value: 'join', icon: <Video className="h-4 w-4" />, onSelect: () => setSelectedInterview(row) },
+          { label: 'View Details', value: 'view', icon: <Eye className="h-4 w-4" /> },
+          { label: row.status === 'live' ? 'Monitor Live' : row.status === 'scheduled' ? 'Join Interview' : 'View Recording', value: 'join', icon: <Video className="h-4 w-4" /> },
           { label: 'Download Report', value: 'report', icon: <FileText className="h-4 w-4" />, disabled: row.status === 'scheduled' },
           { label: 'Edit', value: 'edit', icon: <Edit className="h-4 w-4" />, disabled: row.status !== 'scheduled' },
           { divider: true },
@@ -264,7 +270,7 @@ export function InterviewerInterviewsPage() {
         </Button>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-4">
+      <Tabs value={activeTab} onValueChange={setActiveTab as any} className="mb-4">
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="all">All ({mockInterviews.length})</TabsTrigger>
           <TabsTrigger value="upcoming">Upcoming ({mockInterviews.filter(i => i.status === 'scheduled').length})</TabsTrigger>
@@ -286,7 +292,7 @@ export function InterviewerInterviewsPage() {
               />
             </div>
             <div className="flex items-center gap-2 flex-wrap">
-              <Button variant="outline" size="sm" className="gap-2" onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}>
+              <Button variant="neutral" size="sm" className="gap-2" onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}>
                 <Filter className="h-4 w-4" aria-hidden="true" />
                 <span>Sort: {sortBy}</span>
                 {sortOrder === 'asc' ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
@@ -429,7 +435,7 @@ export function InterviewerInterviewsPage() {
             )}
 
             <div className="flex justify-end gap-3 pt-4 border-t border-surface-200 dark:border-surface-800">
-              <Button variant="outline" onClick={() => setSelectedInterview(null)}>Close</Button>
+              <Button variant="neutral" onClick={() => setSelectedInterview(null)}>Close</Button>
               {selectedInterview.status === 'scheduled' && (
                 <Button variant="primary" className="gap-2" onClick={() => setSelectedInterview(null)}>
                   <Video className="h-4 w-4" aria-hidden="true" />
