@@ -31,6 +31,15 @@ import {
   BarChart2,
   PieChart,
   LineChart,
+  Cpu,
+  LayoutGrid,
+  List,
+  Medal,
+  Mic,
+  Play,
+  Share2,
+  Trophy,
+  Users,
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/Card'
@@ -41,6 +50,9 @@ import { Dropdown } from '@/components/ui/Dropdown'
 import { Input } from '@/components/ui/Input'
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/Select'
 import { Pagination } from '@/components/ui/Pagination'
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/Table'
+import { Modal } from '@/components/ui/Modal'
+
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/Tabs'
 import { Separator } from '@/components/ui/Separator'
 import { useAuth } from '@/hooks/useAuth'
@@ -395,7 +407,7 @@ export function IntervieweeHistoryPage() {
                     {getTrendData().map((data, i) => {
                       const x = (i / 5) * 360 + 20
                       const integrityY = 172 - (data.avgIntegrity / 100) * 150
-                      const ratingY = 172 - (data.avgRating / 5) * 150
+                      const ratingY = 172 - (Number(data.avgRating) / 5) * 150
                       return (
                         <g key={i}>
                           <circle cx={x} cy={integrityY} r={4} fill="#6366f1" />
@@ -412,7 +424,7 @@ export function IntervieweeHistoryPage() {
                               />
                               <line
                                 x1={((i - 1) / 5) * 360 + 20}
-                                y1={172 - (getTrendData()[i - 1].avgRating / 5) * 150}
+                                y1={172 - (Number(getTrendData()[i - 1].avgRating) / 5) * 150}
                                 x2={x}
                                 y2={ratingY}
                                 stroke="#f59e0b"

@@ -23,7 +23,7 @@ import {
 import { Button } from '@/components/ui/Button'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
-import { Table, TableColumn } from '@/components/ui/Table'
+import { DataTable, TableColumn } from '@/components/ui/Table'
 import { Input } from '@/components/ui/Input'
 import { Dropdown } from '@/components/ui/Dropdown'
 import { Avatar } from '@/components/ui/Avatar'
@@ -122,8 +122,8 @@ export function InterviewerInterviewsPage() {
     }
 
     result.sort((a, b) => {
-      let aVal: string | number | Date | null = a[sortBy as keyof typeof a]
-      let bVal: string | number | Date | null = b[sortBy as keyof typeof b]
+      let aVal = a[sortBy as keyof typeof a] as string | number | Date | null
+      let bVal = b[sortBy as keyof typeof b] as string | number | Date | null
 
       if (sortBy === 'date') {
         aVal = new Date(a.date).getTime()
@@ -319,7 +319,7 @@ export function InterviewerInterviewsPage() {
 
       <Card className="border-surface-200 dark:border-surface-800">
         <CardContent className="p-0">
-          <Table
+          <DataTable
             columns={columns}
             data={filteredInterviews}
             striped

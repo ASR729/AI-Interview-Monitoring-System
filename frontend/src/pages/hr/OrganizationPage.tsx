@@ -23,11 +23,12 @@ import {
   UserX,
   Settings,
   LogOut,
+  Clock,
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
-import { Table, TableColumn } from '@/components/ui/Table'
+import { DataTable, TableColumn } from '@/components/ui/Table'
 import { Input } from '@/components/ui/Input'
 import { Dropdown } from '@/components/ui/Dropdown'
 import { Avatar } from '@/components/ui/Avatar'
@@ -310,7 +311,7 @@ export function HROrganizationPage() {
 
             <Card className="border-surface-200 dark:border-surface-800">
               <CardContent className="p-0">
-                <Table
+                <DataTable
                   columns={memberColumns}
                   data={filteredMembers}
                   striped
@@ -337,7 +338,7 @@ export function HROrganizationPage() {
 
             <Card className="border-surface-200 dark:border-surface-800">
               <CardContent className="p-0">
-                <Table
+                <DataTable
                   columns={invitationColumns}
                   data={mockInvitations}
                   striped

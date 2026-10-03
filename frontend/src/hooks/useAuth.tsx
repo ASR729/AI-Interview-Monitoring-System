@@ -17,6 +17,7 @@ interface AuthContextType {
   login: (email: string, password: string, role: User['role']) => Promise<void>
   logout: () => void
   register: (data: RegisterData) => Promise<void>
+  updateProfile: (data: Partial<Pick<User, 'name' | 'avatar' | 'status'>>) => void
 }
 
 interface RegisterData {
@@ -123,6 +124,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     login,
     logout,
     register,
+    updateProfile: (data) => {
+      setUser((prev) => {
+        if (!prev) return prev
+        const next = { ...prev, ...data }
+        localStorage.setItem('user', JSON.stringify(next))
+        return next
+      })
+    },
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

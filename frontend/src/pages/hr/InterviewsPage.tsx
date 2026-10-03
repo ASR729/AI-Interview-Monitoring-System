@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import { useState, useMemo } from 'react'
 import { cn } from '@/lib/utils'
 import {
@@ -20,12 +21,11 @@ import {
   Mic,
   Monitor,
   ArrowRight,
-  Filter,
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
-import { Table, TableColumn } from '@/components/ui/Table'
+import { DataTable, TableColumn } from '@/components/ui/Table'
 import { Input } from '@/components/ui/Input'
 import { Dropdown } from '@/components/ui/Dropdown'
 import { Avatar } from '@/components/ui/Avatar'
@@ -95,7 +95,7 @@ export function HRInterviewsPage() {
         aVal = a.integrityScore ?? -1
         bVal = b.integrityScore ?? -1
       }
-      if (typeof aVal === 'string') {
+      if (typeof aVal === 'string' && typeof bVal === 'string') {
         aVal = aVal.toLowerCase()
         bVal = bVal.toLowerCase()
       }
@@ -283,7 +283,7 @@ export function HRInterviewsPage() {
 
       <Card className="border-surface-200 dark:border-surface-800">
         <CardContent className="p-0">
-          <Table
+          <DataTable
             columns={columns}
             data={filteredInterviews}
             striped
@@ -397,13 +397,13 @@ export function HRInterviewsPage() {
               {selectedInterview.recordingUrl && (
                 <Button variant="neutral" asChild>
                   <Monitor className="h-4 w-4" aria-hidden="true" />
-                  <Link href={selectedInterview.recordingUrl}>View Recording</Link>
+                  <Link to={selectedInterview.recordingUrl}>View Recording</Link>
                 </Button>
               )}
               {selectedInterview.reportUrl && (
                 <Button variant="neutral" asChild>
                   <Download className="h-4 w-4" aria-hidden="true" />
-                  <Link href={selectedInterview.reportUrl}>Download Report</Link>
+                  <Link to={selectedInterview.reportUrl}>Download Report</Link>
                 </Button>
               )}
             </div>

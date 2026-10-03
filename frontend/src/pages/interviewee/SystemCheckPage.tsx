@@ -203,7 +203,7 @@ const statusConfig = {
   warning: { icon: AlertCircle, color: 'text-warning-600', label: 'Warning', variant: 'warning' as const },
 }
 
-const mockResults = {
+const mockResults: Record<string, { status: 'passed' | 'failed' | 'warning'; score: number; details: string; recommendation: string }> = {
   camera_access: { status: 'passed' as const, score: 100, details: 'Camera access granted. Device: "FaceTime HD Camera"', recommendation: '' },
   camera_resolution: { status: 'passed' as const, score: 100, details: 'Resolution: 1920x1080 @ 30fps', recommendation: '' },
   camera_fps: { status: 'passed' as const, score: 95, details: 'Stable 30fps achieved', recommendation: '' },
@@ -294,7 +294,7 @@ export function IntervieweeSystemCheckPage() {
 
   const handleCameraToggle = async () => {
     if (isCameraOn) {
-      videoRef.current?.srcObject?.getTracks().forEach(track => track.stop())
+      (videoRef.current?.srcObject as MediaStream | null)?.getTracks().forEach(track => track.stop())
       videoRef.current.srcObject = null
       setIsCameraOn(false)
     } else {

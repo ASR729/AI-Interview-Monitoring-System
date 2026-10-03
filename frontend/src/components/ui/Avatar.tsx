@@ -80,7 +80,6 @@ export const Avatar = forwardRef<HTMLDivElement, AvatarProps>(
     ref
   ) => {
     const shapeClass = shape === 'circle' ? 'rounded-full' : 'rounded-xl'
-    const showStatus = status && status !== 'offline'
 
     return (
       <div ref={ref} className={cn('relative inline-flex shrink-0', className)} {...props}>
@@ -110,7 +109,7 @@ export const Avatar = forwardRef<HTMLDivElement, AvatarProps>(
             </div>
           )}
         </div>
-        {showStatus && (
+        {status && (
           <span
             className={cn(
               'absolute border-2 border-white dark:border-surface-950 rounded-full',

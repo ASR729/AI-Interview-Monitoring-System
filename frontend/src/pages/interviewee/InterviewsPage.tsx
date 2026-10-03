@@ -31,6 +31,9 @@ import { Dropdown } from '@/components/ui/Dropdown'
 import { Input } from '@/components/ui/Input'
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/Select'
 import { Pagination } from '@/components/ui/Pagination'
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/Table'
+import { Modal } from '@/components/ui/Modal'
+
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/Tabs'
 import { useAuth } from '@/hooks/useAuth'
 
@@ -605,7 +608,7 @@ export function IntervieweeInterviewsPage() {
                 <div className="prose prose-surface dark:prose-invert max-w-none">
                   <h5 className="font-medium text-surface-900 dark:text-surface-50 mb-2">Executive Summary</h5>
                   <p className="text-surface-600 dark:text-surface-400 mb-4">
-                    {selectedInterview.candidateName || 'Candidate'} completed a {getTypeLabel(selectedInterview.type).toLowerCase()} for the {selectedInterview.role} position at {selectedInterview.company} on {selectedInterview.date}. The interview lasted {selectedInterview.duration} minutes with an overall integrity score of {selectedInterview.integrityScore}% and an interviewer rating of {selectedInterview.rating}/5.0.
+                    {(selectedInterview as { candidateName?: string }).candidateName || 'Candidate'} completed a {getTypeLabel(selectedInterview.type).toLowerCase()} for the {selectedInterview.role} position at {selectedInterview.company} on {selectedInterview.date}. The interview lasted {selectedInterview.duration} minutes with an overall integrity score of {selectedInterview.integrityScore}% and an interviewer rating of {selectedInterview.rating}/5.0.
                   </p>
                   <h5 className="font-medium text-surface-900 dark:text-surface-50 mb-2">Integrity Assessment</h5>
                   <p className="text-surface-600 dark:text-surface-400 mb-4">

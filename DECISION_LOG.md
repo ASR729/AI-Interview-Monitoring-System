@@ -253,3 +253,13 @@ Related requirements:
 
 Supersedes:
 ```
+
+## DEC — Phase 2 Stabilization Decisions
+
+**Status:** APPROVED (by implementation)
+- Single `BrowserRouter` in `main.tsx`; `App.tsx` contains only `<Routes>`.
+- Component API extended (`danger`, `checked`, `onSelect`) to match page usage — pages kept as the usage contract source.
+- Data-driven table renamed to `DataTable`; compositional `Table*` primitives added to `ui/Table.tsx`.
+- ESLint 9 flat config adopted (`eslint.config.js`); unused-vars demoted to warn (legacy demo pages retain illustrative code).
+- Build pipeline: `tsc -b && vite build` to guarantee type checking in production builds.
+- Frontend remains mock-data only; no Phase 4–6 functionality implemented.

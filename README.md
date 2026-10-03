@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # AI Interview Monitoring and Detection System
 
 ## Product Framing
@@ -54,16 +53,16 @@ This system provides observable signals, structured events, evidence/context, an
 24. [ ] Phase 24 — SaaS Productization & Enterprise Scale
 
 ## Documentation
-- [PRD](./docs/01-PRD.docx)
-- [SRS](./docs/02-SRS.docx)
-- [System Architecture](./docs/03-System-Architecture.docx)
-- [Database Specification](./docs/04-Database-Specification.docx)
-- [AI/ML Specification](./docs/05-AI-ML-Specification.docx)
-- [UI/UX Specification](./docs/06-UI-UX-Specification.docx)
-- [Development Plan](./docs/07-Development-Plan.docx)
-- [Zero-Cost Infrastructure Plan](./docs/08-Infrastructure-Plan.docx)
-- [Testing & Evaluation Plan](./docs/09-Testing-Evaluation.docx)
-- [Startup/Product Roadmap](./docs/10-Startup-Product-Roadmap.docx)
+- [PRD](./docs/01-PRD.md)
+- [SRS](./docs/02-SRS.md)
+- [System Architecture](./docs/03-System-Architecture.md)
+- [Database Specification](./docs/04-Database-Specification.md)
+- [AI/ML Specification](./docs/05-AI-ML-Specification.md)
+- [UI/UX Specification](./docs/06-UI-UX-Specification.md)
+- [Development Plan](./docs/07-Development-Plan.md)
+- [Zero-Cost Infrastructure Plan](./docs/08-Infrastructure-Plan.md)
+- [Testing & Evaluation Plan](./docs/09-Testing-Evaluation.md)
+- [Startup/Product Roadmap](./docs/10-Startup-Product-Roadmap.md)
 
 ## Project Control
 - [Implementation Plan](./IMPLEMENTATION_PLAN.md)
@@ -85,6 +84,3 @@ cd ../ai-service && python -m venv venv && source venv/bin/activate && pip insta
 
 ## License
 Proprietary - All rights reserved.
-=======
-# AI-Interview-Monitoring-System
->>>>>>> 04d4b38bbc5eb8e09cc040a53a5ac5b7d8459286

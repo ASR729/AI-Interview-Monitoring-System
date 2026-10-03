@@ -10,6 +10,7 @@ import {
   Database,
   Webhook,
   Puzzle,
+  Network,
   Save,
   Loader2,
   Check,
@@ -89,7 +90,7 @@ export function HRSettingsPage() {
 
   const [integrations, setIntegrations] = useState([
     { id: 'ats', name: 'Applicant Tracking System', description: 'Greenhouse, Lever, Workable', status: 'disconnected', icon: Database },
-    { id: 'calendar', name: 'Calendar Sync', description: 'Google Calendar, Outlook', status: 'connected', icon: Integration },
+    { id: 'calendar', name: 'Calendar Sync', description: 'Google Calendar, Outlook', status: 'connected', icon: Network },
     { id: 'video', name: 'Video Conferencing', description: 'Zoom, Teams, Google Meet', status: 'connected', icon: Monitor },
     { id: 'sso', name: 'Single Sign-On', description: 'SAML 2.0, OIDC, Okta, Azure AD', status: 'disconnected', icon: Lock },
     { id: 'webhook', name: 'Webhooks', description: 'Custom event notifications', status: 'disconnected', icon: Webhook },
@@ -110,7 +111,7 @@ export function HRSettingsPage() {
     try {
       await new Promise(resolve => setTimeout(resolve, 1000))
       if (section === 'profile' && user) {
-        await updateProfile({ name: profile.name })
+        updateProfile({ name: profile.name })
       }
       success('Saved', `${section.charAt(0).toUpperCase() + section.slice(1)} settings updated successfully`)
     } catch {

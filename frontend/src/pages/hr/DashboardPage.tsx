@@ -29,7 +29,7 @@ import {
 import { Button } from '@/components/ui/Button'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
-import { Table, TableColumn } from '@/components/ui/Table'
+import { DataTable, TableColumn } from '@/components/ui/Table'
 import { Input } from '@/components/ui/Input'
 import { Dropdown, DropdownItem } from '@/components/ui/Dropdown'
 import { Avatar, AvatarGroup } from '@/components/ui/Avatar'
@@ -265,7 +265,7 @@ export function HRDashboardPage() {
             </Button>
           </CardHeader>
           <CardContent className="p-0">
-            <Table
+            <DataTable
               columns={columns}
               data={mockRecentInterviews}
               striped
@@ -289,7 +289,7 @@ export function HRDashboardPage() {
             </Button>
           </CardHeader>
           <CardContent className="p-0">
-            <Table
+            <DataTable
               columns={candidateColumns}
               data={mockTopCandidates}
               striped

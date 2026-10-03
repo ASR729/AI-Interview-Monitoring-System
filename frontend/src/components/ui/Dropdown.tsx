@@ -6,8 +6,9 @@ export type DropdownItem =
   | {
       label: string
       value?: string
-      icon?: ReactNode
+      icon?: ReactNode | React.ElementType
       onClick?: () => void
+      onSelect?: () => void
       disabled?: boolean
       danger?: boolean
       divider?: false
@@ -55,8 +56,9 @@ export function Dropdown({ trigger, items, onSelect, align = 'right', className 
     if (!item.disabled && !item.divider) {
       if (item.onClick) {
         item.onClick()
-      } else if (item.value) {
-        onSelect?.(item.value)
+      } else {
+        item.onSelect?.()
+        if (item.value) onSelect?.(item.value)
       }
       setIsOpen(false)
     }
@@ -67,20 +69,22 @@ export function Dropdown({ trigger, items, onSelect, align = 'right', className 
     const currentEnabledIndex = enabledItems.findIndex((_, i) => i === index)
 
     switch (event.key) {
-      case 'ArrowDown':
+      case 'ArrowDown': {
         event.preventDefault()
         const nextIndex = enabledItems.findIndex((_, i) => i > currentEnabledIndex)
         if (nextIndex !== -1) {
           ;(document.querySelectorAll('[role="menuitem"]')[nextIndex] as HTMLElement)?.focus()
         }
         break
-      case 'ArrowUp':
+      }
+      case 'ArrowUp': {
         event.preventDefault()
         const prevIndex = enabledItems.findIndex((_, i) => i < currentEnabledIndex)
         if (prevIndex !== -1) {
           ;(document.querySelectorAll('[role="menuitem"]')[prevIndex] as HTMLElement)?.focus()
         }
         break
+      }
       case 'Escape':
         setIsOpen(false)
         triggerRef.current?.focus()
@@ -133,11 +137,14 @@ export function Dropdown({ trigger, items, onSelect, align = 'right', className 
                   item.disabled && 'opacity-50 pointer-events-none'
                 )}
               >
-                {item.icon && (
-                  <span className="flex-shrink-0 h-4 w-4">
-                    {typeof item.icon === 'function' ? <item.icon className="h-4 w-4" /> : item.icon}
-                  </span>
-                )}
+                {item.icon && (() => {
+                  const IconCmp = item.icon as React.ElementType
+                  return (
+                    <span className="flex-shrink-0 h-4 w-4">
+                      {typeof item.icon === 'function' ? <IconCmp className="h-4 w-4" /> : item.icon}
+                    </span>
+                  )
+                })()}
                 <span className="flex-1">{item.label}</span>
               </button>
             )

@@ -12,6 +12,7 @@ import {
   BarChart2,
   PieChart,
   TrendingUp,
+  Shield,
   AlertTriangle,
   CheckCircle,
   Clock,
@@ -26,7 +27,7 @@ import {
 import { Button } from '@/components/ui/Button'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
-import { Table, TableColumn } from '@/components/ui/Table'
+import { DataTable, TableColumn } from '@/components/ui/Table'
 import { Input } from '@/components/ui/Input'
 import { Dropdown } from '@/components/ui/Dropdown'
 import { Modal } from '@/components/ui/Modal'
@@ -92,7 +93,7 @@ export function HRReportsPage() {
     result.sort((a, b) => {
       let aVal: string | number = a[sortBy]
       let bVal: string | number = b[sortBy]
-      if (typeof aVal === 'string') {
+      if (typeof aVal === 'string' && typeof bVal === 'string') {
         aVal = aVal.toLowerCase()
         bVal = bVal.toLowerCase()
       }
@@ -317,7 +318,7 @@ export function HRReportsPage() {
 
             <Card className="border-surface-200 dark:border-surface-800">
               <CardContent className="p-0">
-                <Table
+                <DataTable
                   columns={reportColumns}
                   data={filteredReports}
                   striped

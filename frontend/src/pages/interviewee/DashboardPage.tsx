@@ -33,6 +33,8 @@ import { Avatar } from '@/components/ui/Avatar'
 import { Progress } from '@/components/ui/Progress'
 import { Dropdown } from '@/components/ui/Dropdown'
 import { useAuth } from '@/hooks/useAuth'
+import { useToast } from '@/components/ui/Toast'
+import { Separator } from '@/components/ui/Separator'
 
 const mockUpcomingInterviews = [
   { id: 'INT-001', company: 'TechCorp Inc.', role: 'Senior Frontend Engineer', interviewer: 'Alex Rivera', time: 'Today, 2:00 PM', duration: 60, type: 'Final Interview', status: 'scheduled', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=TechCorp', preparation: 85 },
@@ -66,6 +68,7 @@ const preparationSteps = [
 ]
 
 export function IntervieweeDashboardPage() {
+  const { success } = useToast()
   const { user } = useAuth()
 
   const statsCards = useMemo(() => [
@@ -443,6 +446,3 @@ export function IntervieweeDashboardPage() {
     </div>
   )
 }
-
-// Need to import Users icon
-import { Users } from 'lucide-react'

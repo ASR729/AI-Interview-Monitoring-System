@@ -3,6 +3,7 @@ import { cn } from '@/lib/utils'
 
 interface ToggleProps extends Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, 'onChange'> {
   pressed?: boolean
+  checked?: boolean
   onPressedChange?: (pressed: boolean) => void
   defaultChecked?: boolean
   onChange?: (checked: boolean) => void
@@ -11,10 +12,11 @@ interface ToggleProps extends Omit<React.ButtonHTMLAttributes<HTMLButtonElement>
 }
 
 export const Toggle = forwardRef<HTMLButtonElement, ToggleProps>(
-  ({ className, pressed: controlledPressed, onPressedChange, defaultChecked, onChange, variant = 'default', size = 'md', children, ...props }, ref) => {
+  ({ className, pressed: controlledPressed, checked: controlledChecked, onPressedChange, defaultChecked, onChange, variant = 'default', size = 'md', children, ...props }, ref) => {
     const [internalPressed, setInternalPressed] = useState(defaultChecked || false)
-    const isControlled = controlledPressed !== undefined
-    const pressed = isControlled ? controlledPressed : internalPressed
+    const controlled = controlledPressed !== undefined ? controlledPressed : controlledChecked
+    const isControlled = controlled !== undefined
+    const pressed = isControlled ? controlled : internalPressed
 
     const sizeClasses = {
       sm: 'h-8 px-2.5',

@@ -4,8 +4,8 @@
 
 ## Current State
 
-- **Current stage:** Phase 3 Complete → Ready for Phase 2 Integration
-- **Current phase:** Phase 2 — Frontend Foundation (Resume Integration)
+- **Current stage:** Phase 2 Stabilized → Ready for Phase 4 (Python/FastAPI AI Service)
+- **Current phase:** Phase 2 — Frontend Foundation
 - **Overall status:** IN PROGRESS
 - **MVP:** NOT STARTED
 - **V2:** NOT STARTED
@@ -24,7 +24,7 @@ Plan v1.0 - \[x\] Startup/Product Roadmap v1.0
 |  \# | Phase                            | Status      | Verification |
 |----:|----------------------------------|-------------|--------------|
 |   1 | Requirements Freeze & Repository | COMPLETE    | Git initialized, directories created, .gitignore, README.md, docker-compose.yml |
-|   2 | Frontend Foundation              | PARTIAL     | React app exists, needs API integration |
+|   2 | Frontend Foundation              | STABILIZED — pending user browser confirmation | tsc 0 errors, lint 0 errors, build passes, dev server live at http://localhost:5173 |
 |   3 | Node/Express Backend Foundation  | COMPLETE    | Express app, health endpoint, CORS, error handling, tests |
 |   4 | Python/FastAPI AI Service        | NOT STARTED | —            |
 |   5 | MongoDB                          | NOT STARTED | —            |
@@ -180,3 +180,22 @@ See `PHASE_3_VERIFICATION.md` for manual verification steps. User must:
 - No AI service integration (Phase 4)
 
 **Next Phase:** Phase 2 — Frontend Foundation (resume and integrate with backend)
+
+## Phase 2 Stabilization (2026-10-03)
+
+**Fixes applied:**
+- Removed nested `<BrowserRouter>` (duplicate in `main.tsx` and `App.tsx`)
+- Added `src/vite-env.d.ts` (typed `import.meta.env`, `VITE_API_BASE_URL`)
+- Reconciled component/page contracts: `Button.danger`, `Toggle.checked/onChange`, `DropdownItem.onSelect`, `DropdownItem.icon` accepts element types
+- Fixed Avatar status typing, Toast effect cleanup, Dropdown case-block declarations
+- Renamed data-driven `Table` → `DataTable`; added compositional `Table/TableHeader/TableBody/TableRow/TableHead/TableCell/TableFooter/TableCaption` primitives
+- Fixed duplicate imports (`Filter`, `Users`), missing imports (`Link`, `Clock`, `Shield`, `Modal`, table primitives, lucide icons), invalid prop usage (`Link href` → `to`), type errors (sort casts, `getTracks` on `MediaStream`, `avgRating` number cast, widened `mockResults` status)
+- Added `updateProfile` to `useAuth` (mock)
+- Created `eslint.config.js` (ESLint 9 flat config) — `npm run lint` executes: 0 errors, 244 non-blocking warnings
+- Build script now `tsc -b && vite build` — typecheck enforced before build; build passes
+- Created missing `public/grid.svg` and `public/favicon.svg`
+- Fixed README merge-conflict markers and doc links (.docx → .md)
+
+**Results:** tsc 173 → 0 errors; lint executes; production build passes; dev server verified live. Frontend API client (`lib/api.ts`) typed and ready (mock auth remains until Phase 6).
+
+**Known non-blocking:** 244 lint warnings (unused vars), bundle >500 kB warning, no automated browser test — user browser confirmation at http://localhost:5173 is the remaining gate.

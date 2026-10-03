@@ -3,6 +3,7 @@ import { cn } from '@/lib/utils'
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary' | 'ghost' | 'danger' | 'outline' | 'neutral'
+  danger?: boolean
   size?: 'sm' | 'md' | 'lg' | 'icon'
   loading?: boolean
   leftIcon?: React.ReactNode
@@ -16,6 +17,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     {
       className,
       variant = 'primary',
+      danger = false,
       size = 'md',
       loading = false,
       leftIcon,
@@ -45,7 +47,8 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     }
     const widthClass = fullWidth ? 'w-full' : ''
 
-    const buttonClasses = cn(baseClasses, variantClasses[variant], sizeClasses[size], widthClass, className)
+    const effectiveVariant = danger ? 'danger' : variant
+    const buttonClasses = cn(baseClasses, variantClasses[effectiveVariant], sizeClasses[size], widthClass, danger && variant !== 'danger' && 'bg-transparent text-danger-600 hover:bg-danger-50 dark:text-danger-400 dark:hover:bg-danger-500/10', className)
 
     // If asChild is true, just return children with classes applied
     if (asChild) {

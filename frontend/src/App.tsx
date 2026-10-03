@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { Routes, Route, Navigate } from 'react-router-dom'
 import { ThemeProvider } from '@/hooks/useTheme'
 import { AuthProvider, useAuth } from '@/hooks/useAuth'
 import { ToastContainer } from '@/components/ui/Toast'
@@ -83,7 +83,7 @@ export function App() {
   return (
     <ThemeProvider>
       <AuthProvider>
-        <BrowserRouter>
+        
           <ToastProvider>
             <Routes>
               <Route element={<PublicLayout />}>
@@ -125,7 +125,6 @@ export function App() {
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </ToastProvider>
-        </BrowserRouter>
       </AuthProvider>
     </ThemeProvider>
   )

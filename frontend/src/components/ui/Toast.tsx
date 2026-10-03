@@ -126,7 +126,9 @@ export function useToast() {
 
   useEffect(() => {
     toastListeners.add(setToasts)
-    return () => toastListeners.delete(setToasts)
+    return () => {
+      toastListeners.delete(setToasts)
+    }
   }, [])
 
   const showToast = (toast: Omit<ToastProps, 'id' | 'onClose'>) => {

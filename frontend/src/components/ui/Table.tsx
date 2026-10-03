@@ -26,7 +26,7 @@ interface TableProps<T> extends HTMLAttributes<HTMLTableElement> {
   hoverable?: boolean
 }
 
-export function Table<T>({
+export function DataTable<T>({
   columns,
   data,
   keyExtractor = (row: T) => String((row as Record<string, unknown>).id || Math.random()),
@@ -185,7 +185,7 @@ export function Table<T>({
   )
 }
 
-Table.displayName = 'Table'
+DataTable.displayName = 'DataTable'
 
 interface PaginationProps {
   currentPage: number
@@ -316,4 +316,49 @@ function ChevronRight({ className, ...props }: React.SVGProps<SVGSVGElement>) {
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
     </svg>
   )
+}
+export function Table({ className, children, ...props }: HTMLAttributes<HTMLTableElement>) {
+  return (
+    <div className="table-container">
+      <table className={cn('table w-full', className)} {...props}>
+        {children}
+      </table>
+    </div>
+  )
+}
+
+export function TableHeader({ className, children, ...props }: HTMLAttributes<HTMLTableSectionElement>) {
+  return <thead className={className} {...props}>{children}</thead>
+}
+
+export function TableBody({ className, children, ...props }: HTMLAttributes<HTMLTableSectionElement>) {
+  return <tbody className={className} {...props}>{children}</tbody>
+}
+
+export function TableFooter({ className, children, ...props }: HTMLAttributes<HTMLTableSectionElement>) {
+  return <tfoot className={className} {...props}>{children}</tfoot>
+}
+
+export function TableRow({ className, children, ...props }: HTMLAttributes<HTMLTableRowElement>) {
+  return <tr className={className} {...props}>{children}</tr>
+}
+
+export function TableHead({ className, children, ...props }: React.ThHTMLAttributes<HTMLTableCellElement>) {
+  return (
+    <th scope="col" className={cn('px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-surface-500 dark:text-surface-400', className)} {...props}>
+      {children}
+    </th>
+  )
+}
+
+export function TableCell({ className, children, ...props }: React.TdHTMLAttributes<HTMLTableCellElement>) {
+  return (
+    <td className={cn('px-4 py-3 text-sm text-surface-900 dark:text-surface-50', className)} {...props}>
+      {children}
+    </td>
+  )
+}
+
+export function TableCaption({ className, children, ...props }: HTMLAttributes<HTMLTableCaptionElement>) {
+  return <caption className={className} {...props}>{children}</caption>
 }
