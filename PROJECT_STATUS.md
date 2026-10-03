@@ -4,8 +4,8 @@
 
 ## Current State
 
-- **Current stage:** Phase 2 Stabilized → Ready for Phase 4 (Python/FastAPI AI Service)
-- **Current phase:** Phase 2 — Frontend Foundation
+- **Current stage:** Phase 4 COMPLETE → Ready for Phase 5 (MongoDB)
+- **Current phase:** Phase 4 — Python/FastAPI AI Service
 - **Overall status:** IN PROGRESS
 - **MVP:** NOT STARTED
 - **V2:** NOT STARTED
@@ -26,7 +26,7 @@ Plan v1.0 - \[x\] Startup/Product Roadmap v1.0
 |   1 | Requirements Freeze & Repository | COMPLETE    | Git initialized, directories created, .gitignore, README.md, docker-compose.yml |
 |   2 | Frontend Foundation              | STABILIZED — pending user browser confirmation | tsc 0 errors, lint 0 errors, build passes, dev server live at http://localhost:5173 |
 |   3 | Node/Express Backend Foundation  | COMPLETE    | Express app, health endpoint, CORS, error handling, tests |
-|   4 | Python/FastAPI AI Service        | NOT STARTED | —            |
+|   4 | Python/FastAPI AI Service        | COMPLETE    | 24/24 pytest pass, uvicorn cold start verified, /health + /ready live on :8000, OpenAPI docs 200 |
 |   5 | MongoDB                          | NOT STARTED | —            |
 |   6 | Authentication & RBAC            | NOT STARTED | —            |
 |   7 | HR Product                       | NOT STARTED | —            |
@@ -128,7 +128,7 @@ After every phase, update: - status - implementation summary -
 tests/verification - acceptance criteria - limitations - blockers -
 human actions - commit/milestone - next phase
 
-**Last state:** Phase 3 complete. Node.js/Express backend foundation established with health endpoint, CORS, error handling, and test suite. Backend runs on port 3001 with `/api` base path. Ready for Phase 2 frontend-backend integration.
+**Last state:** Phase 4 complete. Python/FastAPI AI service foundation established: app factory with lifespan, environment-driven configuration, `/health` + `/ready` + `/` endpoints, JSON error handling, OpenAPI docs, and a 24-test suite. Service verified live on port 8000 (cold start + health check). No AI/CV capability by design (Phase 13). Ready for Phase 5 (MongoDB).
 
 ## Phase 3 Details
 
@@ -199,3 +199,57 @@ See `PHASE_3_VERIFICATION.md` for manual verification steps. User must:
 **Results:** tsc 173 → 0 errors; lint executes; production build passes; dev server verified live. Frontend API client (`lib/api.ts`) typed and ready (mock auth remains until Phase 6).
 
 **Known non-blocking:** 244 lint warnings (unused vars), bundle >500 kB warning, no automated browser test — user browser confirmation at http://localhost:5173 is the remaining gate.
+
+## Phase 4 Details
+
+**Implementation Date:** 2026-10-03 (completed/resumed)
+
+**Status:** COMPLETE — all acceptance criteria verified.
+
+**Files (all verified in repo):**
+- `ai-service/app/main.py` — FastAPI app factory, lifespan startup/shutdown logging, JSON error handlers
+- `ai-service/app/core/config.py` — centralized `pydantic-settings` configuration (env vars, optional untracked `.env`)
+- `ai-service/app/core/logging.py` — logging configuration (no sensitive content in logs)
+- `ai-service/app/routes/health.py` — `GET /`, `GET /health`, `GET /ready`
+- `ai-service/app/schemas/health.py` — typed response models (Pydantic)
+- `ai-service/app/services/analysis/__init__.py` — documented extension point for Phase 13+ analysis modules (empty by design)
+- `ai-service/requirements.txt` — pinned dependencies (fastapi, uvicorn, pydantic, pydantic-settings, pytest, httpx2)
+- `ai-service/.env.example`, `ai-service/.gitignore`, `ai-service/README.md`
+- `ai-service/tests/test_app.py`, `ai-service/tests/test_config.py`, `ai-service/tests/test_health.py`
+
+**Service Configuration:**
+- Port: 8000 (bind `0.0.0.0`)
+- Health Endpoint: `GET /health` (liveness; process status only — never claims AI/model status)
+- Readiness Endpoint: `GET /ready` (`components_ready: ["api"]`)
+- Docs: `/docs` (Swagger UI), `/redoc`, `/openapi.json`
+- Environment: development-ready, no secrets committed
+
+**Verification Performed (2026-10-03):**
+1. `pytest`: **24/24 passed** (app, config, health suites; deterministic, offline)
+2. Cold start: killed existing process, fresh `uvicorn app.main:app` start — success
+3. `curl http://localhost:8000/health` → `{"status":"ok","service":"ai-service","version":"0.1.0","environment":"development","timestamp":"..."}`
+4. `curl http://localhost:8000/ready` → `{"status":"ready","service":"ai-service","version":"0.1.0","components_ready":["api"]}`
+5. `/docs` → HTTP 200; unknown route → JSON 404
+6. `pip install -r requirements.txt` → all requirements satisfied, clean install
+7. Negative-scope guards: tests assert no `pymongo`/`motor` (Phase 5) and no `cv2`/`mediapipe` (Phase 13) are importable in this phase
+
+**Phase 4 Acceptance Criteria:** COMPLETE
+- ✅ FastAPI service structure (app/core/routes/schemas/services separation)
+- ✅ Environment-driven configuration with `.env.example` (no secrets)
+- ✅ Health endpoint implemented and verified live
+- ✅ Readiness endpoint implemented
+- ✅ Modular inference extension point documented (`app/services/analysis/`)
+- ✅ MVP CV dependency decision recorded (deferred to Phase 13 — see DEC-018)
+- ✅ Automated test suite passing
+- ✅ No MongoDB (Phase 5), no authentication (Phase 6), no business endpoints (Phases 7–19)
+- ✅ AI integrity rules respected: health endpoints never claim AI/model/detection status
+
+**Known Limitations:**
+- No AI/CV models or analysis capability (intentional — Phase 13, per Development Plan M07 "CV service foundation")
+- No MongoDB or persistence (Phase 5)
+- No Node.js backend integration (later phase boundary; browsers must not call this service directly)
+- `docker-compose.yml` references `ai-service/Dockerfile` (not yet created) and uses an outdated `uvicorn main:app` path (actual module: `app.main:app`); containerization is deferred — the service is verified to run locally without Docker
+- Host Python 3.11.2 was created without `ensurepip`; the venv was bootstrapped manually (documented in `ai-service/README.md` §4)
+- This environment's package index provides the official next-generation httpx client under the name `httpx2` (same maintainer: Tom Christie/Pydantic); pinned accordingly in `requirements.txt` and verified working
+
+**Next Phase:** Phase 5 — MongoDB (depends on Phase 3; backend connection and persistence test).

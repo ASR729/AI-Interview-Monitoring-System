@@ -298,3 +298,132 @@ Related requirements:
 
 Supersedes:
 - None.
+
+## DEC-018 — AI Service Foundation Scope; CV Dependencies Deferred to Phase 13
+
+**Status:** APPROVED (by implementation, resolving an IMPLEMENTATION_PLAN ambiguity)
+**Date:** 2026-10-03
+**Phase:** Phase 4 — Python/FastAPI AI Service
+
+**Context:**
+`IMPLEMENTATION_PLAN.md` Phase 4 work line mentions "MVP CV dependencies", but the
+same plan's Phase 13 ("Computer Vision") depends on Phases 4 **and** 12, and the
+Development Plan (M07) defines the Phase 4 step as "CV service foundation: Create
+FastAPI AI-service structure and monitoring interfaces" — structure and interfaces,
+not CV libraries. AI/ML Specification §30 lists the CV framework (OpenCV) and
+face/landmark processing (MediaPipe) as Baseline decisions for the CV work itself,
+with "exact implementation TBD". Installing heavy CV dependencies before any CV
+code exists would violate the Minimum-Code Strategy (DEC-015) and add unused
+dependencies.
+
+**Decision:**
+Phase 4 delivers the development foundation only: FastAPI app factory, environment-
+driven configuration, `/health` + `/ready` + `/` endpoints, JSON error handling,
+OpenAPI docs, tests, and the documented `app/services/analysis/` extension point.
+No CV framework (opencv-python, mediapipe, numpy-for-CV) is installed in Phase 4;
+tests assert these are absent. CV dependencies are installed in Phase 13 when the
+CV engine is actually implemented and validated.
+
+**Alternatives:**
+- Install opencv-python/mediapipe in Phase 4 (rejected: unused dependencies, no CV
+  code until Phase 13, conflicts with DEC-015 and test-enforced negative scope).
+
+**Rationale:**
+- Development Plan M07 governs the foundation step: structure + monitoring interfaces.
+- IMPLEMENTATION_PLAN Phase 13 explicitly depends on Phase 12 (WebRTC/media) for CV,
+  proving CV work is not expected inside Phase 4.
+- AI/ML Spec §30 marks exact CV implementation as TBD pending validation.
+
+**Impact:**
+- `requirements.txt` contains only foundation dependencies; Phase 13 will extend it.
+- Phase 4 gate ("AI service runs locally and health check passes") is unaffected.
+
+**Verification:**
+- `tests/test_app.py::TestNoExternalDependencies` asserts `cv2`/`mediapipe` (and
+  `pymongo`/`motor`) are not importable — 24/24 tests pass.
+
+**Related requirements:**
+IMPLEMENTATION_PLAN.md Phase 4/13, Development Plan M07, AI/ML Specification §30,
+DEC-004, DEC-009, DEC-015.
+
+---
+
+## DEC-019 — AI Service Runtime Boundary and Port
+
+**Status:** APPROVED (by implementation)
+**Date:** 2026-10-03
+**Phase:** Phase 4 — Python/FastAPI AI Service
+
+**Context:**
+The AI service must be separated from the Node.js application backend (System
+Architecture v1.0; AI/ML Specification §29). A concrete local runtime shape was
+needed for Phase 4 verification.
+
+**Decision:**
+The AI service binds `0.0.0.0:8000` locally (configurable via `AI_SERVICE_HOST`/
+`AI_SERVICE_PORT`). Browsers must not call this service directly; the Node.js
+application backend is the future internal-HTTP caller (proposed flow
+`Application -> AI Service`). Health endpoints report process status only and never
+claim AI/model/detector readiness, per the AI integrity rules (DEC-001, DEC-002).
+
+**Alternatives:**
+- Same-process embedding in Express (rejected: violates approved separation).
+- Direct browser access (rejected: bypasses the primary authorization boundary).
+
+**Rationale:**
+- Matches System Architecture v1.0 deployment shape and AI/ML Spec §29.
+- Keeps the Phase 4 gate verifiable with a simple local health check.
+
+**Impact:**
+- Port 8000 reserved for this service in local development; docker-compose maps it.
+- Phase 11+/13+ integration must go through the backend, not the browser.
+
+**Verification:**
+- Cold-start uvicorn + `curl http://localhost:8000/health` returned
+  `{"status":"ok", ...}` (2026-10-03); 24/24 tests pass.
+
+**Related requirements:**
+System Architecture v1.0 (§ authorization boundary, deployment shape), AI/ML
+Specification §29, CLAUDE.md §4/§8, DEC-001, DEC-002, DEC-003.
+
+---
+
+## DEC-020 — httpx Client Package Provisioning in the Development Environment
+
+**Status:** PROVISIONAL (environment-verified)
+**Date:** 2026-10-03
+**Phase:** Phase 4 — Python/FastAPI AI Service
+
+**Context:**
+FastAPI's `TestClient` requires an HTTP client library. This development
+environment's package index provides the official next-generation httpx client
+(maintained by Tom Christie / Pydantic Services Inc., BSD-3-Clause) under the
+package name `httpx2` (with dependency `httpcore2`); the classic `httpx` name is
+not resolvable here.
+
+**Decision:**
+Pin `httpx2==2.13.1` in `ai-service/requirements.txt` and verify the full
+dependency set installs cleanly and the test suite passes against it. On a
+standard PyPI environment where `httpx` resolves, `httpx` is the equivalent pin;
+either name satisfies the TestClient requirement.
+
+**Alternatives:**
+- Force `httpx` install (rejected: not resolvable from this environment's index).
+- Vendor the client (rejected: unnecessary).
+
+**Rationale:**
+- Same upstream maintainer/license as httpx; verified metadata and functionality.
+- Requirements must reflect what actually installs and passes verification.
+
+**Impact:**
+- `requirements.txt` line 6 pins `httpx2==2.13.1`; verified 2026-10-03.
+- If the project later moves to a standard PyPI index, replace with `httpx`.
+
+**Verification:**
+- `pip install -r requirements.txt` → all satisfied; 24/24 tests pass (2026-10-03).
+
+**Related requirements:**
+DEC-004 (exact library versions verified during implementation), CLAUDE.md §7
+(anti-hallucination), CLAUDE.md §11.
+
+---
