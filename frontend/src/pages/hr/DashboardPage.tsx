@@ -131,9 +131,9 @@ export function HRDashboardPage() {
     { key: 'actions', header: 'Actions', render: (row) => (
       <Dropdown
         trigger={
-          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+          <span className="flex h-8 w-8 items-center justify-center rounded-lg text-surface-500 hover:bg-surface-100 hover:text-surface-700 dark:text-surface-400 dark:hover:bg-surface-800 dark:hover:text-surface-300 transition-colors cursor-pointer">
             <MoreVertical className="h-4 w-4" aria-hidden="true" />
-          </Button>
+          </span>
         }
         align="right"
         items={[
@@ -182,9 +182,9 @@ export function HRDashboardPage() {
     { key: 'actions', header: 'Actions', render: (row) => (
       <Dropdown
         trigger={
-          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+          <span className="flex h-8 w-8 items-center justify-center rounded-lg text-surface-500 hover:bg-surface-100 hover:text-surface-700 dark:text-surface-400 dark:hover:bg-surface-800 dark:hover:text-surface-300 transition-colors cursor-pointer">
             <MoreVertical className="h-4 w-4" aria-hidden="true" />
-          </Button>
+          </span>
         }
         align="right"
         items={[

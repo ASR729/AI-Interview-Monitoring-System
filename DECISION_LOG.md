@@ -263,3 +263,38 @@ Supersedes:
 - ESLint 9 flat config adopted (`eslint.config.js`); unused-vars demoted to warn (legacy demo pages retain illustrative code).
 - Build pipeline: `tsc -b && vite build` to guarantee type checking in production builds.
 - Frontend remains mock-data only; no Phase 4–6 functionality implemented.
+
+## DEC — Sign-out and Layout Fixes (User-reported, 2026-10-03)
+
+**Status:** APPROVED (by implementation, user-requested bug fix)
+
+Context:
+- User reported: unusable dashboard layout, non-functional logout button after sign-in, and sign-in/sign-up form not centered.
+- Headless-browser verification showed the HR/interviewer/interviewee dashboard logout worked in current code, but the public homepage avatar-menu "Sign out" was a no-op (empty handler in `PublicLayout.tsx`), which is the path the user actually hit.
+
+Decision:
+- Wired the public homepage user-menu "Sign out" to `logout()` + `navigate('/', { replace: true })` in `PublicLayout.tsx`.
+- Replaced the misused shared `Dropdown` component (internal `isOpen` caused a double-click requirement) in `PublicLayout` with plain menu markup matching the dashboard layouts; added click-outside close.
+- Made logout deterministic in `HRLayout`, `InterviewerLayout`, `IntervieweeLayout`: explicit `navigate('/signin', { replace: true })` after `logout()` via a shared `handleLogout`.
+- Hardened `logout` in `useAuth.tsx`: clears `user`/`token` from both localStorage and sessionStorage.
+- Fixed invalid nested `<button>` DOM (button-in-button) in table action menus (`hr/DashboardPage.tsx`, `interviewer/ReportsPage.tsx`) by using styled span triggers.
+- Sign-in/sign-up pages remain fully centered (verified); no split layout used.
+
+Alternatives:
+- Controlled `open`/`onToggle` props on the shared Dropdown component (rejected: broader API change than needed).
+
+Rationale:
+- Minimal, deterministic fixes; single-click sign-out everywhere; no ghost sessions after reload.
+
+Impact:
+- Frontend-only change; no backend/AI-service impact; no data model change.
+
+Verification:
+- 13/13 headless Chrome tests passed (homepage sign-out, sidebar/avatar-menu sign-out per role, redirect-after-logout, centered auth cards, no DOM nesting warnings).
+- `npm run lint`: 0 errors. `npm run build`: passes.
+
+Related requirements:
+- UI/UX Specification v1.0 (navigation, auth pages); PRD v1.0 (authentication).
+
+Supersedes:
+- None.

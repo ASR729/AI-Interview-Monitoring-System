@@ -1,5 +1,5 @@
 import { ReactNode, useState } from 'react'
-import { Outlet, Link, useLocation, NavLink } from 'react-router-dom'
+import { Outlet, Link, useLocation, NavLink, useNavigate } from 'react-router-dom'
 import { cn } from '@/lib/utils'
 import {
   LayoutDashboard,
@@ -35,11 +35,17 @@ const navigation = [
 export function InterviewerLayout() {
   const { theme, toggleTheme } = useTheme()
   const { user, logout } = useAuth()
+  const navigate = useNavigate()
   const location = useLocation()
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false)
   const [userMenuOpen, setUserMenuOpen] = useState(false)
   const [notificationsOpen, setNotificationsOpen] = useState(false)
+
+  const handleLogout = () => {
+    logout()
+    navigate('/signin', { replace: true })
+  }
 
   const mockNotifications = [
     { id: '1', title: 'Interview starting soon', message: 'Senior Frontend Engineer interview in 10 minutes', time: '5 min ago', read: false, type: 'upcoming' },
@@ -122,7 +128,7 @@ export function InterviewerLayout() {
         <div className="p-4 border-t border-surface-200 dark:border-surface-800">
           <button
             type="button"
-            onClick={() => logout()}
+            onClick={handleLogout}
             className={cn(
               'w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-body font-medium transition-all duration-200',
               'text-surface-600 hover:text-danger-600 hover:bg-danger-50 dark:text-surface-400 dark:hover:text-danger-400 dark:hover:bg-danger-500/10',
@@ -266,7 +272,7 @@ export function InterviewerLayout() {
                       type="button"
                       className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-danger-600 hover:bg-danger-50 dark:text-danger-400 dark:hover:bg-danger-500/10 transition-colors text-left"
                       role="menuitem"
-                      onClick={() => { setUserMenuOpen(false); logout() }}
+                      onClick={() => { setUserMenuOpen(false); handleLogout() }}
                     >
                       <LogOut className="h-4 w-4" aria-hidden="true" /> Sign out
                     </button>

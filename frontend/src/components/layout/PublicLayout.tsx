@@ -1,10 +1,9 @@
-import { ReactNode } from 'react'
-import { Link, Outlet } from 'react-router-dom'
+import { ReactNode, useEffect, useRef, useState } from 'react'
+import { Link, Outlet, useNavigate } from 'react-router-dom'
 import { cn } from '@/lib/utils'
-import { Menu, X, Sun, Moon, Monitor, Shield, Users, BarChart2, Sparkles } from 'lucide-react'
+import { Menu, X, Sun, Moon, Monitor, Shield, BarChart2, LogOut } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Avatar, AvatarGroup } from '@/components/ui/Avatar'
-import { Dropdown, DropdownItem } from '@/components/ui/Dropdown'
 import { useTheme } from '@/hooks/useTheme'
 import { useAuth } from '@/hooks/useAuth'
 
@@ -47,9 +46,40 @@ const footerLinks = {
 
 export function PublicLayout() {
   const { theme, toggleTheme } = useTheme()
-  const { user, isLoading } = useAuth()
+  const { user, isLoading, logout } = useAuth()
+  const navigate = useNavigate()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [userMenuOpen, setUserMenuOpen] = useState(false)
+  const userMenuRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+        setUserMenuOpen(false)
+      }
+    }
+    if (userMenuOpen) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [userMenuOpen])
+
+  const handleUserMenuSelect = (value: string) => {
+    setUserMenuOpen(false)
+    if (value === 'signout') {
+      logout()
+      navigate('/', { replace: true })
+      return
+    }
+    if (user) {
+      const dashboardPath =
+        user.role === 'hr' ? '/hr/dashboard' : user.role === 'interviewer' ? '/interviewer/dashboard' : '/interviewee/dashboard'
+      const settingsPath =
+        user.role === 'hr' ? '/hr/settings' : user.role === 'interviewer' ? '/interviewer/settings' : '/interviewee/settings'
+      if (value === 'dashboard') navigate(dashboardPath)
+      else navigate(settingsPath)
+    }
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-white dark:bg-surface-950">
@@ -93,7 +123,7 @@ export function PublicLayout() {
               {isLoading ? (
                 <div className="h-10 w-10 animate-pulse bg-surface-200 dark:bg-surface-800 rounded-full" />
               ) : user ? (
-                <div className="relative">
+                <div className="relative" ref={userMenuRef}>
                   <button
                     onClick={() => setUserMenuOpen(!userMenuOpen)}
                     className="flex items-center gap-2 p-1 rounded-lg hover:bg-surface-100 dark:hover:bg-surface-800 transition-colors"
@@ -111,25 +141,35 @@ export function PublicLayout() {
                     </span>
                   </button>
                   {userMenuOpen && (
-                    <Dropdown
-                      trigger={<span />}
-                      align="right"
-                      items={[
-                        { label: 'Dashboard', value: 'dashboard', icon: <BarChart2 className="h-4 w-4" /> },
-                        { label: 'Profile', value: 'profile', icon: <Users className="h-4 w-4" /> },
-                        { label: 'Settings', value: 'settings', icon: <Shield className="h-4 w-4" /> },
-                        { divider: true },
-                        { label: 'Sign out', value: 'signout', danger: true, icon: <X className="h-4 w-4" /> },
-                      ]}
-                      onSelect={(value) => {
-                        setUserMenuOpen(false)
-                        if (value === 'signout') {
-                          // Handle sign out
-                        } else {
-                          // Navigate to appropriate page
-                        }
-                      }}
-                    />
+                    <div
+                      className="absolute right-0 mt-2 w-48 bg-white dark:bg-surface-900 rounded-xl shadow-lg border border-surface-200 dark:border-surface-800 overflow-hidden z-50"
+                      role="menu"
+                    >
+                      <button
+                        type="button"
+                        className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-surface-700 hover:bg-surface-100 dark:text-surface-300 dark:hover:bg-surface-800 transition-colors text-left"
+                        role="menuitem"
+                        onClick={() => handleUserMenuSelect('dashboard')}
+                      >
+                        <BarChart2 className="h-4 w-4" aria-hidden="true" /> Dashboard
+                      </button>
+                      <button
+                        type="button"
+                        className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-surface-700 hover:bg-surface-100 dark:text-surface-300 dark:hover:bg-surface-800 transition-colors text-left"
+                        role="menuitem"
+                        onClick={() => handleUserMenuSelect('settings')}
+                      >
+                        <Shield className="h-4 w-4" aria-hidden="true" /> Settings
+                      </button>
+                      <button
+                        type="button"
+                        className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-danger-600 hover:bg-danger-50 dark:text-danger-400 dark:hover:bg-danger-500/10 transition-colors text-left"
+                        role="menuitem"
+                        onClick={() => handleUserMenuSelect('signout')}
+                      >
+                        <LogOut className="h-4 w-4" aria-hidden="true" /> Sign out
+                      </button>
+                    </div>
                   )}
                 </div>
               ) : (
@@ -282,5 +322,3 @@ export function PublicLayout() {
     </div>
   )
 }
-
-import { useState } from 'react'

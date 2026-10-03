@@ -459,7 +459,7 @@ export function InterviewerReportsPage() {
                     </td>
                     <td className="px-4 py-4 text-right">
                       <Dropdown
-                        trigger={<Button variant="ghost" size="sm" className="p-2 h-8 w-8"><MoreVertical className="h-4 w-4" aria-hidden="true" /></Button>}
+                        trigger={<span className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg text-surface-500 transition-colors hover:bg-surface-100 hover:text-surface-700 dark:text-surface-400 dark:hover:bg-surface-800 dark:hover:text-surface-300"><MoreVertical className="h-4 w-4" aria-hidden="true" /></span>}
                         items={[
                           { label: 'View Report', icon: Eye as any, onClick: () => { setSelectedReport(report); setActiveDetailTab('overview') } },
                           { label: 'View Alerts', icon: AlertCircle as any, onClick: () => { setSelectedReport(report); setActiveDetailTab('alerts') } },

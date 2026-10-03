@@ -113,8 +113,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const logout = useCallback(() => {
-    setUser(null)
     localStorage.removeItem('user')
+    localStorage.removeItem('token')
+    sessionStorage.removeItem('user')
+    sessionStorage.removeItem('token')
+    setUser(null)
   }, [])
 
   const value: AuthContextType = {
