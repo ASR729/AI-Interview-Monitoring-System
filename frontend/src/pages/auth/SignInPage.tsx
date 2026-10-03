@@ -59,6 +59,7 @@ export function SignInPage() {
   }
 
   return (
+    <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center px-4 py-12">
     <div className="w-full max-w-md">
       <div className="text-center mb-8">
         <Link to="/" className="inline-flex items-center gap-2 mb-6" aria-label="Home">
@@ -220,6 +221,7 @@ export function SignInPage() {
           </div>
         </CardFooter>
       </Card>
+    </div>
     </div>
   )
 }

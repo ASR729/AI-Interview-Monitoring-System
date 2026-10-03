@@ -51,11 +51,11 @@ export function HRLayout() {
   const unreadCount = mockNotifications.filter((n) => !n.read).length
 
   return (
-    <div className="min-h-screen bg-surface-50 dark:bg-surface-950">
+    <div className="min-h-screen bg-surface-50 dark:bg-surface-950 lg:flex">
       <aside
         className={cn(
-          'fixed lg:static inset-y-0 left-0 z-40 w-64 bg-white dark:bg-surface-900 border-r border-surface-200 dark:border-surface-800 transition-all duration-300 ease-in-out flex flex-col',
-          sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0',
+          'fixed inset-y-0 left-0 z-40 w-64 lg:sticky lg:top-0 lg:h-screen lg:shrink-0 bg-white dark:bg-surface-900 border-r border-surface-200 dark:border-surface-800 transition-all duration-300 ease-in-out flex flex-col',
+          mobileSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0',
           !sidebarOpen && 'lg:w-20'
         )}
         aria-label="Main navigation"
@@ -117,26 +117,26 @@ export function HRLayout() {
         </nav>
 
         <div className="p-4 border-t border-surface-200 dark:border-surface-800">
-          <Link
-            to="/hr/settings"
+          <button
+            type="button"
+            onClick={() => logout()}
             className={cn(
-              'flex items-center gap-3 px-3 py-2.5 rounded-xl text-body font-medium transition-all duration-200',
-              'text-surface-600 hover:text-surface-900 hover:bg-surface-100 dark:text-surface-400 dark:hover:text-surface-50 dark:hover:bg-surface-800',
+              'w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-body font-medium transition-all duration-200',
+              'text-surface-600 hover:text-danger-600 hover:bg-danger-50 dark:text-surface-400 dark:hover:text-danger-400 dark:hover:bg-danger-500/10',
               !sidebarOpen && 'justify-center px-2'
             )}
-            title={!sidebarOpen ? 'Settings' : undefined}
-            onClick={() => setMobileSidebarOpen(false)}
+            title={!sidebarOpen ? 'Sign out' : undefined}
           >
-            <Settings className="h-5 w-5 flex-shrink-0" aria-hidden="true" />
-            {sidebarOpen && <span className="truncate">Settings</span>}
-          </Link>
+            <LogOut className="h-5 w-5 flex-shrink-0" aria-hidden="true" />
+            {sidebarOpen && <span className="truncate">Sign out</span>}
+          </button>
         </div>
       </aside>
 
       <div
         className={cn(
-          'lg:pl-64 transition-all duration-300 ease-in-out min-h-screen flex flex-col',
-          !sidebarOpen && 'lg:pl-20'
+          'flex-1 min-w-0 transition-all duration-300 ease-in-out min-h-screen flex flex-col',
+
         )}
       >
         <header className="sticky top-0 z-30 w-full border-b border-surface-200 dark:border-surface-800 bg-white/80 dark:bg-surface-900/80 backdrop-blur-md">
@@ -241,22 +241,24 @@ export function HRLayout() {
                   </span>
                 </button>
                 {userMenuOpen && (
-                  <Dropdown
-                    trigger={<span />}
-                    align="right"
-                    items={[
-                      { label: 'Profile', value: 'profile', icon: <User className="h-4 w-4" /> },
-                      { label: 'Settings', value: 'settings', icon: <Settings className="h-4 w-4" /> },
-                      { divider: true },
-                      { label: 'Sign out', value: 'signout', danger: true, icon: <LogOut className="h-4 w-4" /> },
-                    ]}
-                    onSelect={(value) => {
-                      setUserMenuOpen(false)
-                      if (value === 'signout') {
-                        logout()
-                      }
-                    }}
-                  />
+                  <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-surface-900 rounded-xl shadow-lg border border-surface-200 dark:border-surface-800 overflow-hidden z-50" role="menu">
+                    <Link
+                      to="/hr/settings"
+                      className="flex items-center gap-2 px-4 py-2.5 text-sm text-surface-700 hover:bg-surface-100 dark:text-surface-300 dark:hover:bg-surface-800 transition-colors"
+                      role="menuitem"
+                      onClick={() => setUserMenuOpen(false)}
+                    >
+                      <Settings className="h-4 w-4" aria-hidden="true" /> Settings
+                    </Link>
+                    <button
+                      type="button"
+                      className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-danger-600 hover:bg-danger-50 dark:text-danger-400 dark:hover:bg-danger-500/10 transition-colors text-left"
+                      role="menuitem"
+                      onClick={() => { setUserMenuOpen(false); logout() }}
+                    >
+                      <LogOut className="h-4 w-4" aria-hidden="true" /> Sign out
+                    </button>
+                  </div>
                 )}
               </div>
             </div>
