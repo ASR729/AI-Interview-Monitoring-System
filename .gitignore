@@ -66,3 +66,4 @@ docker-compose.override.yml
 *.key
 credentials.json
 service-account.json
+.ideavo/project
