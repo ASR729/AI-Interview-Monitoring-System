@@ -1,0 +1,8 @@
+# AI-service local ignores (complements repository root .gitignore)
+.venv/
+__pycache__/
+*.pyc
+.env
+.pytest_cache/
+.coverage
+htmlcov/
