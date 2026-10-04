@@ -1080,3 +1080,35 @@ role table (interviewer permissions TBD), Database Specification §8/§13
 DEC-005, DEC-011, DEC-023, DEC-028.
 
 ---
+
+## DEC-030 — Frontend API Access via Same-Origin Vite Proxy
+
+**Status:** APPROVED (fix)
+**Date:** 2026-10-04
+**Phase:** Phase 8 (post-milestone fix)
+
+**Context:**
+The frontend API client defaulted to the absolute backend URL
+(`http://localhost:3001`). From a remote browser (public e2b URL), localhost
+resolves to the user's machine, not the sandbox — every API call failed with
+"Unable to reach the server" (sign-in was broken). Additionally, a
+tsc-emitted `vite.config.js` artifact shadowed `vite.config.ts`, silently
+ignoring config changes.
+
+**Decision:**
+- The vite dev server proxies `/api`, `/health` and `/ready` to
+  `http://localhost:3001`; the API client defaults to same-origin relative
+  paths (`VITE_API_BASE_URL` override retained). Works identically for
+  localhost:5180 and the public e2b URL; CORS is bypassed (same origin).
+- The stale `vite.config.js`/`vite.config.d.ts` shadow artifact was removed
+  and regenerated from the updated `vite.config.ts` via `tsc -b`.
+- Dev servers are started detached (`setsid`) so they survive the tool
+  session lifecycle.
+
+**Verification:**
+- Login through the public e2b URL returns a real token; `/health` via the
+  proxy returns backend JSON. Committed as
+  "Fix: frontend API access via same-origin vite proxy (public e2b URL sign-in)".
+
+**Related requirements:** Zero-Cost Infrastructure Plan, CLAUDE.md §8,
+DEC-013 (CORS).
