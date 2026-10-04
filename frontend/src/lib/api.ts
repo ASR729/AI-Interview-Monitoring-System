@@ -1,7 +1,10 @@
 // API configuration and client for the frontend
-// Backend integration at http://localhost:3001 (pinned public URL via VITE_API_BASE_URL)
+// Backend integration: same-origin relative paths by default — the vite dev
+// server proxies /api to the backend, which works for localhost and the
+// public e2b URL alike. Override with VITE_API_BASE_URL only for a
+// same-origin-reachable backend.
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001'
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || ''
 const API_PATH = '/api'
 
 export const apiConfig = {

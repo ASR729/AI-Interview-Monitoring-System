@@ -14,5 +14,14 @@ export default defineConfig({
     strictPort: true,
     host: true,
     allowedHosts: ['.e2b.app'],
+    // Same-origin API access: the browser calls /api on the page's own origin
+    // (works for localhost:5180 and the e2b public URL alike) and the dev
+    // server forwards it to the backend. Direct absolute backend URLs are not
+    // reachable from a remote browser, so the proxy is the default path.
+    proxy: {
+      '/api': 'http://localhost:3001',
+      '/health': 'http://localhost:3001',
+      '/ready': 'http://localhost:3001',
+    },
   },
 })
