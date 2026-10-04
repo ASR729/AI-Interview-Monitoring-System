@@ -279,6 +279,124 @@ export async function createInterviewSession({
   return doc;
 }
 
+export async function findInterviewById(interviewId) {
+  const db = requireDatabase();
+  if (!isNonEmptyString(interviewId)) return null;
+  return db.collection(COLLECTIONS.INTERVIEW_SESSIONS).findOne({ _id: interviewId });
+}
+
+// HR product (Phase 7): candidate selection list. Candidates are not
+// organization-scoped (no org fields documented in the Database
+// Specification; multi-tenancy is Phase 24). Only safe fields from the
+// linked user record are returned (DEC-012).
+export async function listCandidateProfiles() {
+  const db = requireDatabase();
+  const candidates = await db.collection(COLLECTIONS.CANDIDATES).find({}).sort({ created_at: -1 }).toArray();
+  if (candidates.length === 0) return [];
+  const userIds = candidates.map((c) => c.user_id).filter(Boolean);
+  const users = await db
+    .collection(COLLECTIONS.USERS)
+    .find({ _id: { $in: userIds } })
+    .project({ password_hash: 0 })
+    .toArray();
+  const userById = new Map(users.map((u) => [u._id, u]));
+  return candidates.map((c) => {
+    const u = userById.get(c.user_id);
+    return {
+      id: c._id,
+      user_id: c.user_id,
+      name: u ? u.name : null,
+      email: u ? u.email : null,
+      status: u ? u.status : null,
+      created_at: c.created_at,
+    };
+  });
+}
+
+// HR product (Phase 7): recruiter-scoped interview listing (ownership
+// boundary). Joins candidate profile + user for display names without
+// exposing authentication internals.
+export async function listInterviewsByRecruiter(recruiterId) {
+  const db = requireDatabase();
+  if (!isNonEmptyString(recruiterId)) throw new PersistenceError('recruiter_id is required', 'INVALID_FIELD');
+  const interviews = await db
+    .collection(COLLECTIONS.INTERVIEW_SESSIONS)
+    .find({ recruiter_id: recruiterId })
+    .sort({ created_at: -1 })
+    .toArray();
+  if (interviews.length === 0) return [];
+  const candidateIds = [...new Set(interviews.map((i) => i.candidate_id))];
+  const candidates = await db
+    .collection(COLLECTIONS.CANDIDATES)
+    .find({ _id: { $in: candidateIds } })
+    .toArray();
+  const candidateById = new Map(candidates.map((c) => [c._id, c]));
+  const userIds = candidates.map((c) => c.user_id).filter(Boolean);
+  const users = await db
+    .collection(COLLECTIONS.USERS)
+    .find({ _id: { $in: userIds } })
+    .project({ password_hash: 0 })
+    .toArray();
+  const userById = new Map(users.map((u) => [u._id, u]));
+  return interviews.map((interview) => {
+    const candidate = candidateById.get(interview.candidate_id) || null;
+    const candidateUser = candidate ? userById.get(candidate.user_id) || null : null;
+    return {
+      ...interview,
+      candidate: candidate
+        ? {
+            id: candidate._id,
+            name: candidateUser ? candidateUser.name : null,
+            email: candidateUser ? candidateUser.email : null,
+          }
+        : null,
+    };
+  });
+}
+
+// HR product (Phase 7): narrow update surface (ownership must be checked
+// by the caller). Only title and scheduled_start_at are updatable in this
+// phase; candidate reassignment and lifecycle state here would invent
+// undocumented rules. Non-allowlisted fields are ignored.
+export async function updateInterviewSession(interviewId, { title, scheduledStartAt } = {}) {
+  const db = requireDatabase();
+  if (!isNonEmptyString(interviewId)) throw new PersistenceError('interview id is required', 'INVALID_FIELD');
+  const set = { updated_at: new Date() };
+  if (title !== undefined && title !== null) {
+    if (!isNonEmptyString(title)) throw new PersistenceError('interview.title must be a non-empty string', 'INVALID_FIELD');
+    set.title = title.trim();
+  }
+  if (scheduledStartAt === null) {
+    set.scheduled_start_at = null;
+  } else if (scheduledStartAt !== undefined) {
+    set.scheduled_start_at = toDate(scheduledStartAt, 'interview.scheduled_start_at');
+  }
+  const result = await db
+    .collection(COLLECTIONS.INTERVIEW_SESSIONS)
+    .findOneAndUpdate({ _id: interviewId }, { $set: set }, { returnDocument: 'after' });
+  if (!result) throw new PersistenceError('interview not found', 'NOT_FOUND');
+  return result;
+}
+
+// HR product (Phase 7): invitation workflow transition. Only documents the
+// proposed draft -> invited direction (Database Specification §8.1);
+// generates the opaque invite_reference token metadata. Other lifecycle
+// states reject.
+export async function markInterviewInvited(interviewId, inviteReference) {
+  const db = requireDatabase();
+  if (!isNonEmptyString(interviewId)) throw new PersistenceError('interview id is required', 'INVALID_FIELD');
+  if (!isNonEmptyString(inviteReference)) throw new PersistenceError('invite reference is required', 'INVALID_FIELD');
+  const result = await db
+    .collection(COLLECTIONS.INTERVIEW_SESSIONS)
+    .findOneAndUpdate(
+      { _id: interviewId, status: 'draft' },
+      { $set: { status: 'invited', invite_reference: inviteReference, updated_at: new Date() } },
+      { returnDocument: 'after' }
+    );
+  if (!result) throw new PersistenceError('interview is not in a state that can be invited', 'INVALID_STATE');
+  return result;
+}
+
 export async function createMonitoringEvent({
   interviewId,
   timestamp,

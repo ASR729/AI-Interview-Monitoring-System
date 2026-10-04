@@ -136,6 +136,38 @@ export class ApiClient {
   async me(): Promise<MeResponse> {
     return this.get('/api/auth/me')
   }
+
+  // HR interview management (Phase 7)
+  async listCandidates(): Promise<CandidateListResponse> {
+    return this.get('/api/candidates')
+  }
+
+  async createInterview(data: {
+    title: string
+    candidateId: string
+    scheduledStartAt?: string | null
+  }): Promise<InterviewResponse> {
+    return this.post('/api/interviews', data)
+  }
+
+  async listInterviews(): Promise<InterviewListResponse> {
+    return this.get('/api/interviews')
+  }
+
+  async getInterview(id: string): Promise<InterviewResponse> {
+    return this.get(`/api/interviews/${encodeURIComponent(id)}`)
+  }
+
+  async updateInterview(
+    id: string,
+    data: { title?: string; scheduledStartAt?: string | null }
+  ): Promise<InterviewResponse> {
+    return this.patch(`/api/interviews/${encodeURIComponent(id)}`, data)
+  }
+
+  async inviteInterview(id: string): Promise<InterviewResponse> {
+    return this.post(`/api/interviews/${encodeURIComponent(id)}/invite`)
+  }
 }
 
 export interface AuthUserShape {
@@ -157,6 +189,47 @@ export interface AuthResponse {
 export interface MeResponse {
   status: 'ok'
   user: AuthUserShape
+}
+
+export interface InterviewCandidateSummary {
+  id: string
+  name: string | null
+  email: string | null
+}
+
+export interface InterviewSession {
+  id: string
+  title: string
+  status: string
+  scheduled_start_at: string | null
+  invite_reference: string | null
+  candidate: InterviewCandidateSummary | null
+  created_at: string
+  updated_at: string
+}
+
+export interface InterviewResponse {
+  status: 'ok'
+  interview: InterviewSession
+}
+
+export interface InterviewListResponse {
+  status: 'ok'
+  interviews: InterviewSession[]
+}
+
+export interface CandidateProfileSummary {
+  id: string
+  user_id: string
+  name: string | null
+  email: string | null
+  status: string | null
+  created_at: string
+}
+
+export interface CandidateListResponse {
+  status: 'ok'
+  candidates: CandidateProfileSummary[]
 }
 
 export const apiClient = new ApiClient()

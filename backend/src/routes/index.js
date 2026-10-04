@@ -1,6 +1,8 @@
 import express from 'express';
 import authRouter from './auth.js';
 import rbacRouter from './rbac.js';
+import interviewsRouter from './interviews.js';
+import candidatesRouter from './candidates.js';
 
 const router = express.Router();
 
@@ -11,8 +13,9 @@ const router = express.Router();
  * Mount specific route modules here as they are implemented.
  *
  * Phase 6: /auth (authentication), /rbac (authorization verification)
+ * Phase 7: /interviews (HR interview management), /candidates (HR
+ * candidate selection list)
  * Future phases will add:
- * - Phase 7: /interviews (interview management)
  * - Phase 7: /users (user management)
  * - Phase 18: /monitoring (live monitoring endpoints)
  * - Phase 19: /reports (interview reports)
@@ -23,7 +26,7 @@ router.get('/', (req, res) => {
   res.json({
     message: 'AI Interview Monitoring API',
     version: '0.1.0',
-    status: 'Phase 6: Authentication & RBAC',
+    status: 'Phase 7: HR Product',
     endpoints: {
       health: 'GET /health',
       api: 'GET /api',
@@ -34,15 +37,8 @@ router.get('/', (req, res) => {
 
 router.use('/auth', authRouter);
 router.use('/rbac', rbacRouter);
-
-// TODO Phase 7: Add interview routes
-// router.use('/interviews', interviewRouter);
-
-// TODO Phase 7: Add user routes
-// router.use('/users', userRouter);
-
-// TODO Phase 7: Add user routes
-// router.use('/users', userRouter);
+router.use('/interviews', interviewsRouter);
+router.use('/candidates', candidatesRouter);
 
 // TODO Phase 18: Add monitoring routes
 // router.use('/monitoring', monitoringRouter);
