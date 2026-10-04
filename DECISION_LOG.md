@@ -427,3 +427,58 @@ DEC-004 (exact library versions verified during implementation), CLAUDE.md §7
 (anti-hallucination), CLAUDE.md §11.
 
 ---
+
+## DEC-021 — Pinned Public Service URLs (User Hard Constraint)
+
+**Status:** APPROVED (explicit user instruction; permanent)
+**Date:** 2026-10-04
+**Phase:** Cross-phase (Phases 2–3 runtime; all future phases)
+
+**Context:**
+The development environment is an e2b sandbox whose preview links map
+`<port>-<sandbox-host>.e2b.app` to local ports. The user designated the
+frontend preview link as the permanent public URL and instructed that it must
+never change — "even if I say to do so" — and that frontend and backend must
+remain working and visible at their links in the browser.
+
+**Decision:**
+- **Frontend public URL (permanent):** `https://5180-iteaxs65egwgp2h9q52q5.e2b.app/`
+  → local port **5180**.
+- **Backend public URL:** `https://3001-iteaxs65egwgp2h9q52q5.e2b.app/`
+  → local port **3001**.
+- **AI service:** internal port **8000** (backend-only caller; no pinned public
+  URL required in the current phase).
+- `strictPort: true` in both `frontend/vite.config.*` files: vite must fail
+  loudly rather than silently serve on a different port/link.
+- Backend CORS allows the e2b preview origin plus localhost origins (5173/5180)
+  so browser API calls from the pinned frontend origin work from Phase 6 onward.
+- The frontend dev-port change 5173 → 5180 (commit `9fe0da0`, 2026-10-03) is
+  confirmed as intentional environment adaptation, not accidental drift.
+
+**Alternatives:**
+- Revert vite to port 5173 (rejected: breaks the user's designated link).
+- Leave CORS localhost-only (rejected: browser calls from the e2b origin would
+  be blocked from Phase 6 onward).
+
+**Rationale:**
+- The e2b preview link is the user's only browser access point; changing it
+  severs visibility regardless of technical merit.
+- `strictPort` enforces the constraint at the tool level (fail-fast over
+  silent port drift).
+
+**Impact:**
+- Future phases must keep frontend on :5180 and backend on :3001 and must not
+  repurpose the e2b preview origin.
+- Deployment provider decisions (TBD-001) remain separate; the pinned URLs are
+  a development-environment constraint, not the production topology.
+
+**Verification:**
+- Frontend e2b link → HTTP 200; backend e2b link → health OK (2026-10-04).
+- CORS echo: `Access-Control-Allow-Origin: https://5180-iteaxs65egwgp2h9q52q5.e2b.app`.
+- Single config-driven vite instance on 5180 (stray duplicate removed).
+
+**Related requirements:**
+User instruction (2026-10-04), System Architecture v1.0 (authorization
+boundary), UI/UX Specification v1.0, DEC-003, DEC-011, DEC-019.
+
+---

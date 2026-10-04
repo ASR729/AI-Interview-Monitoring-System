@@ -24,7 +24,7 @@ Plan v1.0 - \[x\] Startup/Product Roadmap v1.0
 |  \# | Phase                            | Status      | Verification |
 |----:|----------------------------------|-------------|--------------|
 |   1 | Requirements Freeze & Repository | COMPLETE    | Git initialized, directories created, .gitignore, README.md, docker-compose.yml |
-|   2 | Frontend Foundation              | STABILIZED — pending user browser confirmation | tsc 0 errors, lint 0 errors, build passes, dev server live at http://localhost:5173 |
+|   2 | Frontend Foundation              | STABILIZED — pending user browser confirmation | tsc 0 errors, lint 0 errors, build passes, dev server live on :5180 → https://5180-iteaxs65egwgp2h9q52q5.e2b.app/ (pinned, HTTP 200) |
 |   3 | Node/Express Backend Foundation  | COMPLETE    | Express app, health endpoint, CORS, error handling, tests |
 |   4 | Python/FastAPI AI Service        | COMPLETE    | 24/24 pytest pass, uvicorn cold start verified, /health + /ready live on :8000, OpenAPI docs 200 |
 |   5 | MongoDB                          | NOT STARTED | —            |
@@ -149,7 +149,7 @@ human actions - commit/milestone - next phase
 - Port: 3001
 - API Base: `/api`
 - Health Endpoint: `GET /health`
-- CORS: Allows `http://localhost:5173` (frontend)
+- CORS: Allows `http://localhost:5173`, `http://localhost:5180`, and the pinned e2b preview origin `https://5180-iteaxs65egwgp2h9q52q5.e2b.app`
 - Environment: Development-ready with dotenv
 
 **Verification Required:**
@@ -198,7 +198,25 @@ See `PHASE_3_VERIFICATION.md` for manual verification steps. User must:
 
 **Results:** tsc 173 → 0 errors; lint executes; production build passes; dev server verified live. Frontend API client (`lib/api.ts`) typed and ready (mock auth remains until Phase 6).
 
-**Known non-blocking:** 244 lint warnings (unused vars), bundle >500 kB warning, no automated browser test — user browser confirmation at http://localhost:5173 is the remaining gate.
+**Known non-blocking:** 248 lint warnings (unused vars), bundle >500 kB warning, no automated browser test — user browser confirmation at the pinned frontend link (https://5180-iteaxs65egwgp2h9q52q5.e2b.app/) is the remaining gate.
+
+## Service URL Pinning (2026-10-04)
+
+**User hard constraint (permanent, never change even if requested):**
+- **Frontend public URL:** `https://5180-iteaxs65egwgp2h9q52q5.e2b.app/` — maps to local port **5180**
+- **Backend public URL:** `https://3001-iteaxs65egwgp2h9q52q5.e2b.app/` — maps to local port **3001**
+- **AI service (internal):** port **8000** (backend-only caller; not exposed via a pinned public URL)
+
+**Changes made to enforce the constraint:**
+- Removed a stray duplicate vite dev server (CLI-forced `--port 5173`); a single config-driven vite instance remains on 5180
+- Added `strictPort: true` to `frontend/vite.config.ts` and `frontend/vite.config.js` — if port 5180 is ever blocked, vite fails loudly instead of silently serving on a different port/link
+- Backend CORS now allows the e2b preview origin (`backend/.env` and `backend/.env.example`), so browser API calls from the pinned frontend origin work from Phase 6 onward
+
+**Verified (2026-10-04):**
+- Frontend e2b link → HTTP 200
+- Backend e2b link → `{"status":"ok","service":"interview-monitoring-backend",...}`
+- CORS preflight echo: `Access-Control-Allow-Origin: https://5180-iteaxs65egwgp2h9q52q5.e2b.app`
+- AI service health on :8000 → OK
 
 ## Phase 4 Details
 
