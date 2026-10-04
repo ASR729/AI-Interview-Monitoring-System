@@ -4,6 +4,7 @@ import helmet from 'helmet';
 import morgan from 'morgan';
 import apiRouter from './routes/index.js';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler.js';
+import { isDatabaseConnected, getDatabaseState } from './config/database.js';
 
 const app = express();
 
@@ -37,6 +38,34 @@ app.get('/health', (req, res) => {
     version: '0.1.0',
     environment: process.env.NODE_ENV || 'development',
   });
+});
+
+// Readiness endpoint: application + database connectivity (Phase 5).
+// Deliberately separate from /health so the existing liveness check is
+// never misleading about database state.
+app.get('/ready', (req, res) => {
+  const connected = isDatabaseConnected();
+  if (connected) {
+    res.status(200).json({
+      status: 'ready',
+      timestamp: new Date().toISOString(),
+      service: 'interview-monitoring-backend',
+      database: {
+        connected: true,
+        state: getDatabaseState().state,
+      },
+    });
+  } else {
+    res.status(503).json({
+      status: 'not_ready',
+      timestamp: new Date().toISOString(),
+      service: 'interview-monitoring-backend',
+      database: {
+        connected: false,
+        state: getDatabaseState().state,
+      },
+    });
+  }
 });
 
 // API routes

@@ -4,8 +4,8 @@
 
 ## Current State
 
-- **Current stage:** Phase 4 COMPLETE → Ready for Phase 5 (MongoDB)
-- **Current phase:** Phase 4 — Python/FastAPI AI Service
+- **Current stage:** Phase 5 COMPLETE → Ready for Phase 6 (Authentication & RBAC)
+- **Current phase:** Phase 5 — MongoDB (persistence foundation)
 - **Overall status:** IN PROGRESS
 - **MVP:** NOT STARTED
 - **V2:** NOT STARTED
@@ -27,7 +27,7 @@ Plan v1.0 - \[x\] Startup/Product Roadmap v1.0
 |   2 | Frontend Foundation              | STABILIZED — pending user browser confirmation | tsc 0 errors, lint 0 errors, build passes, dev server live on :5180 → https://5180-iteaxs65egwgp2h9q52q5.e2b.app/ (pinned, HTTP 200) |
 |   3 | Node/Express Backend Foundation  | COMPLETE    | Express app, health endpoint, CORS, error handling, tests |
 |   4 | Python/FastAPI AI Service        | COMPLETE    | 24/24 pytest pass, uvicorn cold start verified, /health + /ready live on :8000, OpenAPI docs 200 |
-|   5 | MongoDB                          | NOT STARTED | —            |
+|   5 | MongoDB                          | COMPLETE    | MongoDB 8.0.4 local (127.0.0.1:27017), 9 collections, 19 baseline indexes, 43/43 tests pass, /ready live, /health unchanged |
 |   6 | Authentication & RBAC            | NOT STARTED | —            |
 |   7 | HR Product                       | NOT STARTED | —            |
 |   8 | Interviewer Product              | NOT STARTED | —            |
@@ -128,7 +128,7 @@ After every phase, update: - status - implementation summary -
 tests/verification - acceptance criteria - limitations - blockers -
 human actions - commit/milestone - next phase
 
-**Last state:** Phase 4 complete. Python/FastAPI AI service foundation established: app factory with lifespan, environment-driven configuration, `/health` + `/ready` + `/` endpoints, JSON error handling, OpenAPI docs, and a 24-test suite. Service verified live on port 8000 (cold start + health check). No AI/CV capability by design (Phase 13). Ready for Phase 5 (MongoDB).
+**Last state:** Phase 5 complete. MongoDB persistence foundation established: local MongoDB Community Server 8.0.4 (127.0.0.1:27017), official `mongodb` Node.js driver 6.21.0, env-driven connection lifecycle with graceful failure/shutdown, all nine documented collections with application-level reference validation, 19 baseline indexes, and a separate `/ready` endpoint (existing `/health` unchanged). Persistence verified by a 43/43-test suite (synthetic data, dedicated `_test` database, guarded cleanup). Regression verified: Phase 3 backend tests pass, backend live on :3001, AI service healthy on :8000, frontend accessible at the pinned canonical URL. Ready for Phase 6 (Authentication & RBAC).
 
 ## Phase 3 Details
 
@@ -271,3 +271,61 @@ See `PHASE_3_VERIFICATION.md` for manual verification steps. User must:
 - This environment's package index provides the official next-generation httpx client under the name `httpx2` (same maintainer: Tom Christie/Pydantic); pinned accordingly in `requirements.txt` and verified working
 
 **Next Phase:** Phase 5 — MongoDB (depends on Phase 3; backend connection and persistence test).
+
+## Phase 5 Details
+
+**Implementation Date:** 2026-10-04
+
+**Status:** COMPLETE — all acceptance gates verified.
+
+**Development Database:**
+- MongoDB Community Server 8.0.4 (Debian 12 tarball), installed at `/usr/local/bin/mongod`
+- Data directory: `/home/user/mongodb-data` (outside the repository; no git risk)
+- Bound to `127.0.0.1:27017` only (no external exposure; no credentials required for local dev — production requires authenticated least-privilege credentials, TBD)
+- Docker is not available in this environment; `docker-compose.yml` was NOT used for MongoDB (no Phase 5 Docker changes; Phase 4 Docker inconsistency left untouched)
+
+**Files Created:**
+- `backend/src/config/database.js` — connection lifecycle (env-driven URI/db name, sanitized logging, graceful failure, idempotent reconnect, close)
+- `backend/src/db/collections.js` — the nine documented collection names
+- `backend/src/db/constants.js` — documented role/status values only (open enums left open)
+- `backend/src/db/indexes.js` — 19 baseline indexes (Database Spec §15 + IDX-USR-001/REC-001/CAN-001) with documented deferrals
+- `backend/src/db/persistence.js` — application persistence layer with reference validation (DB-VAL-001..008 applicable subset) and `PersistenceError`
+- `backend/tests/database.test.js` — 28 persistence/connection tests (synthetic data, dedicated `_test` database, guarded cleanup)
+
+**Files Modified:**
+- `backend/server.js` — non-blocking MongoDB connect + baseline indexes at startup; MongoDB disconnect in graceful shutdown; /ready log line
+- `backend/src/app.js` — added `GET /ready` (database connectivity); existing `GET /health` unchanged
+- `backend/.env.example` / `backend/.env` — `MONGODB_URI`, `MONGODB_DB_NAME` placeholders/local values (no secrets)
+- `backend/package.json` / `package-lock.json` — added `mongodb@^6.21.0` (official driver; no ODM)
+- `backend/README.md` — MongoDB setup, env vars, collections, limitations/TBDs
+
+**Collections Implemented (9):** users, recruiters, candidates, interview_sessions, monitoring_events, ai_analysis_results, alerts, evidence, final_reports. Identifiers are application-generated UUID strings stored as `_id` (Database Spec allows String/ObjectId). interview_sessions is the central entity; monitoring events require a valid interview session (DB-VAL-001) and a timestamp (DB-VAL-002); evidence/AI-analysis/report references are validated at the application layer (DB-VAL-005/007).
+
+**Connection Verification (2026-10-04):**
+1. Node driver ping → `{"ok":1}` on `mongodb://127.0.0.1:27017`
+2. Backend startup → `[db] MongoDB connected` + `[db] Baseline indexes ensured (19)`
+3. `GET /health` → 200, response unchanged from Phase 3
+4. `GET /ready` → 200 `{"status":"ready","database":{"connected":true,...}}`
+5. Graceful shutdown: SIGTERM → `[db] MongoDB connection closed` → HTTP server closed → port 3001 released
+6. Graceful failure: unreachable URI returns null (no crash); `/ready` reports 503 when disconnected
+
+**Persistence Test Results:** 43/43 passed (backend suite: Phase 3 app tests + Phase 5 persistence tests + graceful-connection-failure test). Synthetic data only (`@example.local`, demo names). Dedicated test database `interview_monitoring_test`; guarded drop (only `_test` databases); verified empty after run. Dev database untouched by tests. Note: `tests/app.test.js` (Phase 3) binds port 3001 itself, so the test suite must run with the dev server stopped (pre-existing Phase 3 test-harness behaviour, unchanged).
+
+**Index Verification:** all 19 documented baseline indexes created and recognized (verified via `listIndexes`): users(1), recruiters(1), candidates(1), interview_sessions(4), monitoring_events(3), alerts(2), evidence(2), ai_analysis_results(3), final_reports(2). Deferred: IDX-USR-002, IDX-REC-002, IDX-CAN-002, IDX-EVT-004, IDX-EVT-005, IDX-ALT-003 (no current queries; over-indexing caution respected).
+
+**Regression Verification (2026-10-04):**
+- Phase 3: backend starts, listens on 3001, `/health` 200, existing middleware/error handling/graceful shutdown preserved, existing tests pass
+- Phase 4: AI service untouched and healthy on 8000 (`/health` → ok)
+- Phase 2: frontend accessible at `https://5180-iteaxs65egwgp2h9q52q5.e2b.app/` (HTTP 200) and locally on 5180
+- Canonical URLs unchanged (see DEC-021)
+
+**Known Limitations / TBDs:**
+- Interview lifecycle states: Database Spec §8.1 proposed set (`draft, scheduled, invited, ready, in_progress, completed`) adopted provisionally; SRS has not finalized exact states (references examples such as "configured, active and completed") — conflict recorded in DEC-023. No cancellation/expiry/error states invented.
+- Open enums (users.status, alerts.status, review_status, severity, event_type, source): no closed-enum enforcement (exact values TBD); documented defaults applied when omitted.
+- Confidence: numeric type-check only; no bounded range until a selected model defines one (DB-VAL-003, DB-TBD-003).
+- Retention: `retention_class`/`expires_at` fields supported; no retention period implemented (TBD-004/DB-TBD-006). DB-VAL-009 applies to future review flows (Phases 17/18).
+- Evidence storage provider TBD (DB-TBD-004); MongoDB stores metadata/references only.
+- Deferred indexes documented in `src/db/indexes.js`.
+- No authentication/RBAC (Phase 6); no interview CRUD API (Phase 7); no real-time alert engine (Phase 16).
+
+**Next Phase:** Phase 6 — Authentication & RBAC (depends on Phases 2, 3, 5).

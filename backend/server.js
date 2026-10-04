@@ -1,5 +1,7 @@
 import 'dotenv/config';
 import app from './src/app.js';
+import { connectDatabase, closeDatabase } from './src/config/database.js';
+import { ensureBaselineIndexes } from './src/db/indexes.js';
 
 const PORT = process.env.PORT || 3001;
 
@@ -8,15 +10,30 @@ const server = app.listen(PORT, () => {
   console.log(`[${new Date().toISOString()}] Server running in ${process.env.NODE_ENV || 'development'} mode`);
   console.log(`[${new Date().toISOString()}] Listening on port ${PORT}`);
   console.log(`[${new Date().toISOString()}] Health check: http://localhost:${PORT}/health`);
+  console.log(`[${new Date().toISOString()}] Readiness check: http://localhost:${PORT}/ready`);
 });
+
+// MongoDB connection (Phase 5): non-blocking so the backend still serves
+// /health when MongoDB is unavailable; /ready reports the actual state.
+connectDatabase()
+  .then(async (db) => {
+    if (!db) return;
+    const indexCount = await ensureBaselineIndexes(db);
+    console.log(`[${new Date().toISOString()}] Baseline indexes ensured (${indexCount})`);
+  })
+  .catch((error) => {
+    console.error(`[${new Date().toISOString()}] Database initialization failed: ${error.message}`);
+  });
 
 // Graceful shutdown handler
 const gracefulShutdown = (signal) => {
   console.log(`\n[${new Date().toISOString()}] ${signal} received, starting graceful shutdown...`);
 
   server.close(() => {
-    console.log(`[${new Date().toISOString()}] HTTP server closed`);
-    process.exit(0);
+    closeDatabase().finally(() => {
+      console.log(`[${new Date().toISOString()}] HTTP server closed`);
+      process.exit(0);
+    });
   });
 
   // Force shutdown after 10 seconds
