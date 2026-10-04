@@ -12,6 +12,7 @@ import {
   listInterviewsByRecruiter,
   updateInterviewSession,
   markInterviewInvited,
+  assignInterviewerToInterview,
 } from '../db/persistence.js';
 
 const router = Router();
@@ -55,7 +56,17 @@ async function candidateDisplay(candidateId) {
   };
 }
 
-function shapeInterview(interview, candidate) {
+async function interviewerDisplay(interviewerId) {
+  if (!interviewerId) return null;
+  const db = requireDatabase();
+  const user = await db
+    .collection(COLLECTIONS.USERS)
+    .findOne({ _id: interviewerId }, { projection: { password_hash: 0 } });
+  if (!user) return null;
+  return { id: user._id, name: user.name };
+}
+
+function shapeInterview(interview, candidate, interviewer) {
   return {
     id: interview._id,
     title: interview.title,
@@ -63,13 +74,14 @@ function shapeInterview(interview, candidate) {
     scheduled_start_at: interview.scheduled_start_at ?? null,
     invite_reference: interview.invite_reference ?? null,
     candidate: candidate ?? interview.candidate ?? null,
+    interviewer: interviewer ?? interview.interviewer ?? null,
     created_at: interview.created_at,
     updated_at: interview.updated_at,
   };
 }
 
 router.post('/', authenticate, authorize('hr'), asyncHandler(async (req, res) => {
-  const { title, candidateId, scheduledStartAt } = req.body || {};
+  const { title, candidateId, scheduledStartAt, interviewerId } = req.body || {};
 
   if (!title || typeof title !== 'string' || title.trim().length === 0) {
     throw new AppError('Title is required', 400);
@@ -83,6 +95,9 @@ router.post('/', authenticate, authorize('hr'), asyncHandler(async (req, res) =>
       throw new AppError('scheduledStartAt must be a valid date/time', 400);
     }
   }
+  if (interviewerId !== undefined && interviewerId !== null && typeof interviewerId !== 'string') {
+    throw new AppError('interviewerId must be a valid interviewer user id', 400);
+  }
 
   const profile = await requireRecruiterProfile(req.user.id);
   let interview;
@@ -92,15 +107,17 @@ router.post('/', authenticate, authorize('hr'), asyncHandler(async (req, res) =>
       candidateId,
       title,
       ...(scheduledStartAt !== undefined && scheduledStartAt !== null && { scheduledStartAt }),
+      ...(interviewerId !== undefined && interviewerId !== null && { interviewerId }),
     });
   } catch (error) {
     throw mapPersistenceError(error);
   }
 
   const candidate = await candidateDisplay(interview.candidate_id);
+  const interviewer = await interviewerDisplay(interview.interviewer_id);
   res.status(201).json({
     status: 'ok',
-    interview: shapeInterview(interview, candidate),
+    interview: shapeInterview(interview, candidate, interviewer),
   });
 }));
 
@@ -109,16 +126,17 @@ router.get('/', authenticate, authorize('hr'), asyncHandler(async (req, res) => 
   const interviews = await listInterviewsByRecruiter(profile._id);
   res.status(200).json({
     status: 'ok',
-    interviews: interviews.map((i) => shapeInterview(i, i.candidate)),
+    interviews: interviews.map((i) => shapeInterview(i, i.candidate, i.interviewer)),
   });
 }));
 
 router.get('/:id', authenticate, authorize('hr'), asyncHandler(async (req, res) => {
   const interview = await authorizeInterviewAccess(req.user.id, req.user.role, req.params.id);
   const candidate = await candidateDisplay(interview.candidate_id);
+  const interviewer = await interviewerDisplay(interview.interviewer_id);
   res.status(200).json({
     status: 'ok',
-    interview: shapeInterview(interview, candidate),
+    interview: shapeInterview(interview, candidate, interviewer),
   });
 }));
 
@@ -153,7 +171,7 @@ router.patch('/:id', authenticate, authorize('hr'), asyncHandler(async (req, res
 
   res.status(200).json({
     status: 'ok',
-    interview: shapeInterview(updated, await candidateDisplay(updated.candidate_id)),
+    interview: shapeInterview(updated, await candidateDisplay(updated.candidate_id), await interviewerDisplay(updated.interviewer_id)),
   });
 }));
 
@@ -176,7 +194,32 @@ router.post('/:id/invite', authenticate, authorize('hr'), asyncHandler(async (re
 
   res.status(200).json({
     status: 'ok',
-    interview: shapeInterview(updated, await candidateDisplay(updated.candidate_id)),
+    interview: shapeInterview(updated, await candidateDisplay(updated.candidate_id), await interviewerDisplay(updated.interviewer_id)),
+  });
+}));
+
+// Interviewer assignment workflow (Phase 8, DEC-029): sets
+// interview_sessions.interviewer_id to an active user with the interviewer
+// role. Reassignment follows the same rule while the interview is still in a
+// pre-room state (draft/scheduled/invited); later states reject (409).
+router.post('/:id/assign', authenticate, authorize('hr'), asyncHandler(async (req, res) => {
+  const interview = await authorizeInterviewAccess(req.user.id, req.user.role, req.params.id);
+  const { interviewerId } = req.body || {};
+
+  if (!interviewerId || typeof interviewerId !== 'string') {
+    throw new AppError('A valid interviewer is required', 400);
+  }
+
+  let updated;
+  try {
+    updated = await assignInterviewerToInterview(interview._id, interviewerId);
+  } catch (error) {
+    throw mapPersistenceError(error);
+  }
+
+  res.status(200).json({
+    status: 'ok',
+    interview: shapeInterview(updated, await candidateDisplay(updated.candidate_id), await interviewerDisplay(updated.interviewer_id)),
   });
 }));
 

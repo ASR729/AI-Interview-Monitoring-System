@@ -51,6 +51,24 @@ async function interviewExists(db, interviewId) {
   return interview;
 }
 
+// Interviewer reference (Phase 8/DEC-029): interview_sessions.interviewer_id
+// references users._id directly (no interviewer profile collection is
+// documented in the Database Specification). The referenced user must exist,
+// hold the interviewer backend role and be active.
+async function assertInterviewerReference(db, interviewerUserId) {
+  if (!isNonEmptyString(interviewerUserId)) {
+    throw new PersistenceError('interview.interviewer_id is required', 'INVALID_FIELD');
+  }
+  const user = await db.collection(COLLECTIONS.USERS).findOne({ _id: interviewerUserId });
+  if (!user || user.role !== 'interviewer') {
+    throw new PersistenceError('interview.interviewer_id does not resolve to an interviewer', 'INVALID_REFERENCE');
+  }
+  if (user.status !== 'active') {
+    throw new PersistenceError('interview.interviewer_id must reference an active interviewer', 'INVALID_REFERENCE');
+  }
+  return user;
+}
+
 async function assertEvidenceReferences(db, interviewId, evidenceIds) {
   if (!Array.isArray(evidenceIds)) {
     throw new PersistenceError('evidence_ids must be an array of evidence identifiers', 'INVALID_FIELD');
@@ -235,6 +253,7 @@ export async function createInterviewSession({
   status,
   inviteReference,
   monitoringConfiguration,
+  interviewerId,
 } = {}) {
   const db = requireDatabase();
   if (!isNonEmptyString(recruiterId)) throw new PersistenceError('interview.recruiter_id is required', 'INVALID_FIELD');
@@ -248,6 +267,11 @@ export async function createInterviewSession({
   const candidate = await db.collection(COLLECTIONS.CANDIDATES).findOne({ _id: candidateId });
   if (!candidate) {
     throw new PersistenceError('interview.candidate_id does not resolve to a candidate', 'INVALID_REFERENCE');
+  }
+  // Interviewer assignment (Phase 8/DEC-029): optional at creation; the
+  // reference must resolve to an active user with the interviewer role.
+  if (interviewerId !== undefined && interviewerId !== null) {
+    await assertInterviewerReference(db, interviewerId);
   }
 
   const effectiveStatus = optionalString(status)?.value ?? 'draft';
@@ -269,6 +293,7 @@ export async function createInterviewSession({
     title: title.trim(),
     ...(scheduledStartAt !== undefined && scheduledStartAt !== null && { scheduled_start_at: toDate(scheduledStartAt, 'interview.scheduled_start_at') }),
     status: effectiveStatus,
+    ...(interviewerId !== undefined && interviewerId !== null && { interviewer_id: interviewerId }),
     ...(inviteReference !== undefined && inviteReference !== null && { invite_reference: inviteReference }),
     ...(monitoringConfiguration !== undefined && monitoringConfiguration !== null && { monitoring_configuration: monitoringConfiguration }),
     created_at: now,
@@ -332,15 +357,17 @@ export async function listInterviewsByRecruiter(recruiterId) {
     .toArray();
   const candidateById = new Map(candidates.map((c) => [c._id, c]));
   const userIds = candidates.map((c) => c.user_id).filter(Boolean);
+  const interviewerIds = [...new Set(interviews.map((i) => i.interviewer_id).filter(Boolean))];
   const users = await db
     .collection(COLLECTIONS.USERS)
-    .find({ _id: { $in: userIds } })
+    .find({ _id: { $in: [...userIds, ...interviewerIds] } })
     .project({ password_hash: 0 })
     .toArray();
   const userById = new Map(users.map((u) => [u._id, u]));
   return interviews.map((interview) => {
     const candidate = candidateById.get(interview.candidate_id) || null;
     const candidateUser = candidate ? userById.get(candidate.user_id) || null : null;
+    const interviewerUser = interview.interviewer_id ? userById.get(interview.interviewer_id) || null : null;
     return {
       ...interview,
       candidate: candidate
@@ -348,6 +375,12 @@ export async function listInterviewsByRecruiter(recruiterId) {
             id: candidate._id,
             name: candidateUser ? candidateUser.name : null,
             email: candidateUser ? candidateUser.email : null,
+          }
+        : null,
+      interviewer: interview.interviewer_id
+        ? {
+            id: interview.interviewer_id,
+            name: interviewerUser ? interviewerUser.name : null,
           }
         : null,
     };
@@ -395,6 +428,94 @@ export async function markInterviewInvited(interviewId, inviteReference) {
     );
   if (!result) throw new PersistenceError('interview is not in a state that can be invited', 'INVALID_STATE');
   return result;
+}
+
+// Interviewer product (Phase 8, DEC-029): interview_sessions.interviewer_id
+// references users._id for a user with the interviewer role. Assignment is
+// only meaningful before the interview room is active (draft/scheduled/
+// invited); ready/in_progress/completed sessions reject (no documented
+// reassignment-after-start rule exists). Only originator states are
+// enumerated — the DEC-023 provisional lifecycle is preserved untouched.
+const ASSIGNABLE_STATUSES = ['draft', 'scheduled', 'invited'];
+
+export async function assignInterviewerToInterview(interviewId, interviewerUserId) {
+  const db = requireDatabase();
+  if (!isNonEmptyString(interviewId)) throw new PersistenceError('interview id is required', 'INVALID_FIELD');
+  await assertInterviewerReference(db, interviewerUserId);
+  const result = await db
+    .collection(COLLECTIONS.INTERVIEW_SESSIONS)
+    .findOneAndUpdate(
+      { _id: interviewId, status: { $in: ASSIGNABLE_STATUSES } },
+      { $set: { interviewer_id: interviewerUserId, updated_at: new Date() } },
+      { returnDocument: 'after' }
+    );
+  if (!result) throw new PersistenceError('interview is not in a state that can be assigned', 'INVALID_STATE');
+  return result;
+}
+
+// HR product (Phase 8): interviewer selection list for assignment. Mirrors
+// the safe-fields shape of listCandidateProfiles (users only; no profile
+// collection is documented for interviewers).
+export async function listInterviewerUsers() {
+  const db = requireDatabase();
+  const users = await db
+    .collection(COLLECTIONS.USERS)
+    .find({ role: 'interviewer', status: 'active' })
+    .project({ password_hash: 0 })
+    .sort({ created_at: -1 })
+    .toArray();
+  return users.map((u) => ({
+    id: u._id,
+    name: u.name,
+    email: u.email,
+    status: u.status,
+    created_at: u.created_at,
+  }));
+}
+
+// Interviewer product (Phase 8, DEC-029): assigned-interview listing. Returns
+// interviews where interviewer_id matches the interviewer's user id, with the
+// candidate display name joined (email intentionally withheld — §privacy: the
+// interviewer workflow requires candidate identity, not contact data).
+export async function listInterviewsByInterviewer(interviewerUserId) {
+  const db = requireDatabase();
+  if (!isNonEmptyString(interviewerUserId)) throw new PersistenceError('interviewer id is required', 'INVALID_FIELD');
+  const interviews = await db
+    .collection(COLLECTIONS.INTERVIEW_SESSIONS)
+    .find({ interviewer_id: interviewerUserId })
+    .sort({ created_at: -1 })
+    .toArray();
+  if (interviews.length === 0) return [];
+  const candidateIds = [...new Set(interviews.map((i) => i.candidate_id))];
+  const candidates = await db
+    .collection(COLLECTIONS.CANDIDATES)
+    .find({ _id: { $in: candidateIds } })
+    .toArray();
+  const candidateById = new Map(candidates.map((c) => [c._id, c]));
+  const users = await db
+    .collection(COLLECTIONS.USERS)
+    .find({ _id: { $in: candidates.map((c) => c.user_id).filter(Boolean) } })
+    .project({ password_hash: 0 })
+    .toArray();
+  const userById = new Map(users.map((u) => [u._id, u]));
+  return interviews.map((interview) => {
+    const candidate = candidateById.get(interview.candidate_id) || null;
+    const candidateUser = candidate ? userById.get(candidate.user_id) || null : null;
+    return {
+      ...interview,
+      candidate: candidate ? { id: candidate._id, name: candidateUser ? candidateUser.name : null } : null,
+    };
+  });
+}
+
+// Interviewer product (Phase 8): permitted report retrieval. final_reports is
+// the documented collection (Database Specification §13); IDX-RPT-001 makes
+// this lookup unique per interview. Returns null when no report exists yet —
+// report generation belongs to Phase 19.
+export async function findFinalReportByInterviewId(interviewId) {
+  const db = requireDatabase();
+  if (!isNonEmptyString(interviewId)) return null;
+  return db.collection(COLLECTIONS.FINAL_REPORTS).findOne({ interview_id: interviewId });
 }
 
 export async function createMonitoringEvent({

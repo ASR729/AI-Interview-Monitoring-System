@@ -146,6 +146,7 @@ export class ApiClient {
     title: string
     candidateId: string
     scheduledStartAt?: string | null
+    interviewerId?: string | null
   }): Promise<InterviewResponse> {
     return this.post('/api/interviews', data)
   }
@@ -167,6 +168,27 @@ export class ApiClient {
 
   async inviteInterview(id: string): Promise<InterviewResponse> {
     return this.post(`/api/interviews/${encodeURIComponent(id)}/invite`)
+  }
+
+  // Interviewer assignment + Interviewer product (Phase 8)
+  async listInterviewers(): Promise<InterviewerListResponse> {
+    return this.get('/api/interviewers')
+  }
+
+  async assignInterview(id: string, interviewerId: string): Promise<InterviewResponse> {
+    return this.post(`/api/interviews/${encodeURIComponent(id)}/assign`, { interviewerId })
+  }
+
+  async listAssignedInterviews(): Promise<AssignedInterviewListResponse> {
+    return this.get('/api/interviewer/interviews')
+  }
+
+  async getAssignedInterview(id: string): Promise<AssignedInterviewResponse> {
+    return this.get(`/api/interviewer/interviews/${encodeURIComponent(id)}`)
+  }
+
+  async getAssignedInterviewReport(id: string): Promise<InterviewReportResponse> {
+    return this.get(`/api/interviewer/interviews/${encodeURIComponent(id)}/report`)
   }
 }
 
@@ -197,6 +219,11 @@ export interface InterviewCandidateSummary {
   email: string | null
 }
 
+export interface InterviewInterviewerSummary {
+  id: string
+  name: string | null
+}
+
 export interface InterviewSession {
   id: string
   title: string
@@ -204,6 +231,7 @@ export interface InterviewSession {
   scheduled_start_at: string | null
   invite_reference: string | null
   candidate: InterviewCandidateSummary | null
+  interviewer: InterviewInterviewerSummary | null
   created_at: string
   updated_at: string
 }
@@ -230,6 +258,55 @@ export interface CandidateProfileSummary {
 export interface CandidateListResponse {
   status: 'ok'
   candidates: CandidateProfileSummary[]
+}
+
+export interface InterviewerUserSummary {
+  id: string
+  name: string | null
+  email: string | null
+  status: string | null
+  created_at: string
+}
+
+export interface InterviewerListResponse {
+  status: 'ok'
+  interviewers: InterviewerUserSummary[]
+}
+
+export interface AssignedInterview {
+  id: string
+  title: string
+  status: string
+  scheduled_start_at: string | null
+  started_at: string | null
+  ended_at: string | null
+  candidate: InterviewInterviewerSummary | null
+  created_at: string
+  updated_at: string
+}
+
+export interface AssignedInterviewResponse {
+  status: 'ok'
+  interview: AssignedInterview
+}
+
+export interface AssignedInterviewListResponse {
+  status: 'ok'
+  interviews: AssignedInterview[]
+}
+
+export interface InterviewReport {
+  id: string
+  interview_id: string
+  summary: string | null
+  integrity_indicators: Record<string, unknown> | null
+  generated_at: string | null
+  created_at: string | null
+}
+
+export interface InterviewReportResponse {
+  status: 'ok'
+  report: InterviewReport
 }
 
 export const apiClient = new ApiClient()

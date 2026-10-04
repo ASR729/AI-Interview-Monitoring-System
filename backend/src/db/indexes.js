@@ -22,6 +22,9 @@ const BASELINE_INDEXES = [
   { collection: COLLECTIONS.INTERVIEW_SESSIONS, name: 'idx_int_002_candidate_status_scheduled', key: { candidate_id: 1, status: 1, scheduled_start_at: 1 } },
   { collection: COLLECTIONS.INTERVIEW_SESSIONS, name: 'idx_int_003_status_scheduled', key: { status: 1, scheduled_start_at: 1 } },
   { collection: COLLECTIONS.INTERVIEW_SESSIONS, name: 'idx_int_004_created_desc', key: { created_at: -1 } },
+  // Phase 8 (DEC-029): interviewer assigned-interview listing — mirrors
+  // idx_int_001 for the recruiter listing workload.
+  { collection: COLLECTIONS.INTERVIEW_SESSIONS, name: 'idx_int_005_interviewer_status_created', key: { interviewer_id: 1, status: 1, created_at: 1 }, options: { sparse: true } },
 
   { collection: COLLECTIONS.MONITORING_EVENTS, name: 'idx_evt_001_interview_timestamp', key: { interview_id: 1, timestamp: 1 } },
   { collection: COLLECTIONS.MONITORING_EVENTS, name: 'idx_evt_002_interview_severity_timestamp', key: { interview_id: 1, severity: 1, timestamp: 1 } },

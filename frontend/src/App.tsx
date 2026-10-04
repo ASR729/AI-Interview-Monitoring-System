@@ -25,6 +25,7 @@ import { HRSettingsPage } from '@/pages/hr/SettingsPage'
 
 import { InterviewerDashboardPage } from '@/pages/interviewer/DashboardPage'
 import { InterviewerInterviewsPage } from '@/pages/interviewer/InterviewsPage'
+import { InterviewerInterviewDetailPage } from '@/pages/interviewer/InterviewDetailPage'
 import { InterviewerLivePage } from '@/pages/interviewer/LivePage'
 import { InterviewerReportsPage } from '@/pages/interviewer/ReportsPage'
 import { InterviewerSettingsPage } from '@/pages/interviewer/SettingsPage'
@@ -120,6 +121,7 @@ export function App() {
               <Route element={<InterviewerLayout />}>
                 <Route path="/interviewer/dashboard" element={<ProtectedRoute allowedRoles={['interviewer']}><InterviewerDashboardPage /></ProtectedRoute>} />
                 <Route path="/interviewer/interviews" element={<ProtectedRoute allowedRoles={['interviewer']}><InterviewerInterviewsPage /></ProtectedRoute>} />
+                <Route path="/interviewer/interviews/:id" element={<ProtectedRoute allowedRoles={['interviewer']}><InterviewerInterviewDetailPage /></ProtectedRoute>} />
                 <Route path="/interviewer/live" element={<ProtectedRoute allowedRoles={['interviewer']}><InterviewerLivePage /></ProtectedRoute>} />
                 <Route path="/interviewer/reports" element={<ProtectedRoute allowedRoles={['interviewer']}><InterviewerReportsPage /></ProtectedRoute>} />
                 <Route path="/interviewer/settings" element={<ProtectedRoute allowedRoles={['interviewer']}><InterviewerSettingsPage /></ProtectedRoute>} />

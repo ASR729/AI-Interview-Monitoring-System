@@ -1,18 +1,18 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, Calendar, Mail, Pencil, Send, User, X } from 'lucide-react'
+import { Link, useParams } from 'react-router-dom'
+import { ArrowLeft, Calendar, Mail, Pencil, Send, User, UserPlus, X } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
 import { Input } from '@/components/ui/Input'
+import { Select } from '@/components/ui/Select'
 import { Modal } from '@/components/ui/Modal'
 import { useToast } from '@/components/ui/Toast'
-import { apiClient, ApiError, InterviewSession } from '@/lib/api'
+import { apiClient, ApiError, InterviewerUserSummary, InterviewSession } from '@/lib/api'
 import { interviewStatusConfig, formatInterviewDate } from './interviewStatus'
 
 export function HRInterviewDetailPage() {
   const { id } = useParams<{ id: string }>()
-  const navigate = useNavigate()
   const { success, danger } = useToast()
 
   const [interview, setInterview] = useState<InterviewSession | null>(null)
@@ -27,6 +27,13 @@ export function HRInterviewDetailPage() {
 
   const [showInviteModal, setShowInviteModal] = useState(false)
   const [isInviting, setIsInviting] = useState(false)
+
+  const [showAssignModal, setShowAssignModal] = useState(false)
+  const [interviewers, setInterviewers] = useState<InterviewerUserSummary[]>([])
+  const [interviewersLoading, setInterviewersLoading] = useState(false)
+  const [selectedInterviewerId, setSelectedInterviewerId] = useState('')
+  const [isAssigning, setIsAssigning] = useState(false)
+  const [assignError, setAssignError] = useState<string | null>(null)
 
   const loadInterview = useCallback(async () => {
     if (!id) return
@@ -118,6 +125,39 @@ export function HRInterviewDetailPage() {
     }
   }
 
+  const openAssignModal = async () => {
+    if (!interview) return
+    setSelectedInterviewerId(interview.interviewer?.id ?? '')
+    setAssignError(null)
+    setShowAssignModal(true)
+    setInterviewersLoading(true)
+    try {
+      const response = await apiClient.listInterviewers()
+      setInterviewers(response.interviewers)
+    } catch {
+      setInterviewers([])
+    } finally {
+      setInterviewersLoading(false)
+    }
+  }
+
+  const handleAssign = async () => {
+    if (!interview || !selectedInterviewerId) return
+    setIsAssigning(true)
+    try {
+      const response = await apiClient.assignInterview(interview.id, selectedInterviewerId)
+      setInterview(response.interview)
+      setShowAssignModal(false)
+      success('Interviewer assigned', 'The interviewer was assigned to this interview')
+    } catch (error) {
+      const message = error instanceof ApiError ? error.message : 'Failed to assign the interviewer'
+      setAssignError(message)
+      danger('Assignment failed', message)
+    } finally {
+      setIsAssigning(false)
+    }
+  }
+
   if (isLoading) {
     return (
       <div className="space-y-6 max-w-4xl" aria-busy="true">
@@ -151,6 +191,7 @@ export function HRInterviewDetailPage() {
   const status = interviewStatusConfig(interview.status)
   const StatusIcon = status.icon
   const canInvite = interview.status === 'draft'
+  const canAssign = ['draft', 'scheduled', 'invited'].includes(interview.status)
 
   return (
     <div className="space-y-6 max-w-4xl">
@@ -172,6 +213,12 @@ export function HRInterviewDetailPage() {
             </Badge>
           </div>
           <div className="flex items-center gap-3">
+            {canAssign && (
+              <Button variant="neutral" size="sm" className="gap-2" onClick={openAssignModal} disabled={isEditing}>
+                <UserPlus className="h-4 w-4" aria-hidden="true" />
+                {interview.interviewer ? 'Reassign Interviewer' : 'Assign Interviewer'}
+              </Button>
+            )}
             <Button variant="neutral" size="sm" className="gap-2" onClick={startEditing} disabled={isEditing}>
               <Pencil className="h-4 w-4" aria-hidden="true" />
               Edit Details
@@ -269,6 +316,25 @@ export function HRInterviewDetailPage() {
         <Card className="border-surface-200 dark:border-surface-800">
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
+              <UserPlus className="h-5 w-5 text-brand-600" aria-hidden="true" />
+              Interviewer
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2 text-sm">
+            {interview.interviewer ? (
+              <p className="font-medium text-surface-900 dark:text-surface-50">{interview.interviewer.name ?? 'Interviewer'}</p>
+            ) : (
+              <p className="text-surface-500 dark:text-surface-400">
+                No interviewer assigned yet.
+                {canAssign && ' Use “Assign Interviewer” to choose who conducts this interview.'}
+              </p>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="border-surface-200 dark:border-surface-800">
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
               <Calendar className="h-5 w-5 text-brand-600" aria-hidden="true" />
               Schedule
             </CardTitle>
@@ -338,6 +404,55 @@ export function HRInterviewDetailPage() {
             <Button type="button" loading={isInviting} onClick={handleInvite}>
               <Send className="h-4 w-4" aria-hidden="true" />
               Send Invitation
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      <Modal
+        isOpen={showAssignModal}
+        onClose={() => setShowAssignModal(false)}
+        title={interview.interviewer ? 'Reassign Interviewer' : 'Assign Interviewer'}
+        size="md"
+      >
+        <div className="space-y-5">
+          <p className="text-sm text-surface-600 dark:text-surface-400">
+            Select the interviewer who will conduct this interview. You can change the assignment while the
+            interview has not started.
+          </p>
+          <Select
+            id="assign-interviewer"
+            label="Interviewer"
+            value={selectedInterviewerId}
+            onValueChange={(value) => {
+              setSelectedInterviewerId(value)
+              setAssignError(null)
+            }}
+            options={[
+              { value: '', label: 'Select an interviewer' },
+              ...interviewers.map((i) => ({
+                value: i.id,
+                label: `${i.name ?? 'Interviewer'} — ${i.email ?? 'no email'}`,
+              })),
+            ]}
+            disabled={isAssigning || interviewersLoading}
+            error={assignError ?? undefined}
+          />
+          {interviewersLoading && (
+            <p className="text-sm text-surface-500 dark:text-surface-400">Loading interviewers…</p>
+          )}
+          {!interviewersLoading && interviewers.length === 0 && (
+            <p className="text-sm text-surface-500 dark:text-surface-400">
+              No active interviewer accounts are available.
+            </p>
+          )}
+          <div className="flex justify-end gap-3 pt-4 border-t border-surface-200 dark:border-surface-800">
+            <Button variant="neutral" type="button" onClick={() => setShowAssignModal(false)} disabled={isAssigning}>
+              Cancel
+            </Button>
+            <Button type="button" loading={isAssigning} disabled={!selectedInterviewerId} onClick={handleAssign}>
+              <UserPlus className="h-4 w-4" aria-hidden="true" />
+              Assign
             </Button>
           </div>
         </div>

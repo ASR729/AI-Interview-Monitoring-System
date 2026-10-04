@@ -6,7 +6,12 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/com
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
 import { useToast } from '@/components/ui/Toast'
-import { apiClient, ApiError, CandidateProfileSummary } from '@/lib/api'
+import {
+  apiClient,
+  ApiError,
+  CandidateProfileSummary,
+  InterviewerUserSummary,
+} from '@/lib/api'
 
 export function HRCreateInterviewPage() {
   const navigate = useNavigate()
@@ -17,10 +22,14 @@ export function HRCreateInterviewPage() {
   const [candidatesLoading, setCandidatesLoading] = useState(true)
   const [candidatesError, setCandidatesError] = useState<string | null>(null)
 
+  const [interviewers, setInterviewers] = useState<InterviewerUserSummary[]>([])
+  const [interviewersLoading, setInterviewersLoading] = useState(true)
+
   const [title, setTitle] = useState('')
   const [candidateId, setCandidateId] = useState(
     (location.state as { candidateId?: string } | null)?.candidateId ?? ''
   )
+  const [interviewerId, setInterviewerId] = useState('')
   const [scheduledAt, setScheduledAt] = useState('')
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -39,6 +48,24 @@ export function HRCreateInterviewPage() {
       })
       .finally(() => {
         if (!cancelled) setCandidatesLoading(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  useEffect(() => {
+    let cancelled = false
+    apiClient
+      .listInterviewers()
+      .then((response) => {
+        if (!cancelled) setInterviewers(response.interviewers)
+      })
+      .catch(() => {
+        if (!cancelled) setInterviewers([])
+      })
+      .finally(() => {
+        if (!cancelled) setInterviewersLoading(false)
       })
     return () => {
       cancelled = true
@@ -73,6 +100,7 @@ export function HRCreateInterviewPage() {
         title: title.trim(),
         candidateId,
         scheduledStartAt: scheduledAt ? new Date(scheduledAt).toISOString() : null,
+        interviewerId: interviewerId || null,
       })
       success('Interview created', 'The interview session was created successfully')
       navigate(`/hr/interviews/${response.interview.id}`, { replace: true })
@@ -161,6 +189,24 @@ export function HRCreateInterviewPage() {
                   No registered candidates are available yet. A candidate must have an interviewee account to be associated.
                 </p>
               )}
+            </div>
+
+            <div className="space-y-2">
+              <Select
+                id="interviewer"
+                label="Interviewer"
+                value={interviewerId}
+                onValueChange={setInterviewerId}
+                options={[
+                  { value: '', label: 'Assign later' },
+                  ...interviewers.map((i) => ({
+                    value: i.id,
+                    label: `${i.name ?? 'Interviewer'} — ${i.email ?? 'no email'}`,
+                  })),
+                ]}
+                disabled={isSubmitting || interviewersLoading}
+                helperText="Optional — you can assign an interviewer later from the interview details page."
+              />
             </div>
 
             <div className="space-y-2">
