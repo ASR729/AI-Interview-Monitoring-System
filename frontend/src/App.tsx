@@ -1,6 +1,6 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { ThemeProvider } from '@/hooks/useTheme'
-import { AuthProvider, useAuth } from '@/hooks/useAuth'
+import { AuthProvider, useAuth, getRoleDashboardPath } from '@/hooks/useAuth'
 import { ToastContainer } from '@/components/ui/Toast'
 import { useToast } from '@/components/ui/Toast'
 import { PublicLayout } from '@/components/layout/PublicLayout'
@@ -65,7 +65,7 @@ function ProtectedRoute({ children, allowedRoles }: { children: React.ReactNode;
   return <>{children}</>
 }
 
-function PublicRoute({ children }: { children: React.ReactNode }) {
+function PublicRoute({ children, authRedirect = false }: { children: React.ReactNode; authRedirect?: boolean }) {
   const { user, isLoading } = useAuth()
 
   if (isLoading) {
@@ -74,6 +74,13 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
         <div className="animate-spin rounded-full h-12 w-12 border-4 border-brand-500 border-t-transparent" aria-label="Loading" />
       </div>
     )
+  }
+
+  // Role-aware entry (UX-AUTH-002): an authenticated user is routed to
+  // their role-specific dashboard instead of the sign-in flow. UX only —
+  // the backend remains the authorization boundary.
+  if (authRedirect && user) {
+    return <Navigate to={getRoleDashboardPath(String(user.role))} replace />
   }
 
   return <>{children}</>
@@ -88,8 +95,8 @@ export function App() {
             <Routes>
               <Route element={<PublicLayout />}>
                 <Route path="/" element={<PublicRoute><HomePage /></PublicRoute>} />
-                <Route path="/signin" element={<PublicRoute><SignInPage /></PublicRoute>} />
-                <Route path="/signup" element={<PublicRoute><SignUpPage /></PublicRoute>} />
+                <Route path="/signin" element={<PublicRoute authRedirect><SignInPage /></PublicRoute>} />
+                <Route path="/signup" element={<PublicRoute authRedirect><SignUpPage /></PublicRoute>} />
                 <Route path="/access-denied" element={<AccessDeniedPage />} />
               </Route>
 

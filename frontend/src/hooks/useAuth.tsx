@@ -1,10 +1,13 @@
 import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react'
+import { apiClient } from '@/lib/api'
+
+export type ProductRole = 'hr' | 'interviewer' | 'interviewee'
 
 interface User {
   id: string
   name: string
   email: string
-  role: 'hr' | 'interviewer' | 'interviewee'
+  role: ProductRole | string
   avatar?: string
   status?: 'online' | 'offline' | 'busy' | 'away'
   organizationId?: string
@@ -14,9 +17,9 @@ interface AuthContextType {
   user: User | null
   isLoading: boolean
   isAuthenticated: boolean
-  login: (email: string, password: string, role: User['role']) => Promise<void>
-  logout: () => void
-  register: (data: RegisterData) => Promise<void>
+  login: (email: string, password: string) => Promise<User>
+  logout: () => Promise<void>
+  register: (data: RegisterData) => Promise<User>
   updateProfile: (data: Partial<Pick<User, 'name' | 'avatar' | 'status'>>) => void
 }
 
@@ -24,39 +27,45 @@ interface RegisterData {
   name: string
   email: string
   password: string
-  role: User['role']
+  role: ProductRole
   organizationName?: string
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
-const MOCK_USERS: Record<string, User> = {
-  'hr@demo.com': {
-    id: '1',
-    name: 'Sarah Chen',
-    email: 'hr@demo.com',
-    role: 'hr',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah',
-    status: 'online',
-    organizationId: 'org-1',
-  },
-  'interviewer@demo.com': {
-    id: '2',
-    name: 'Michael Torres',
-    email: 'interviewer@demo.com',
-    role: 'interviewer',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Michael',
-    status: 'online',
-    organizationId: 'org-1',
-  },
-  'candidate@demo.com': {
-    id: '3',
-    name: 'Alex Rivera',
-    email: 'candidate@demo.com',
-    role: 'interviewee',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Alex',
-    status: 'online',
-  },
+const TOKEN_KEY = 'token'
+const USER_KEY = 'user'
+
+// Role-aware entry (UX-AUTH-002): each authenticated role lands on its
+// own dashboard. The backend-assigned role is the source of truth.
+export function getRoleDashboardPath(role: string): string {
+  if (role === 'hr') return '/hr/dashboard'
+  if (role === 'interviewer') return '/interviewer/dashboard'
+  if (role === 'interviewee') return '/interviewee/dashboard'
+  return '/signin'
+}
+
+function persistSession(user: User, token: string) {
+  localStorage.setItem(TOKEN_KEY, token)
+  localStorage.setItem(USER_KEY, JSON.stringify(user))
+  apiClient.setAuthToken(token)
+}
+
+function clearSession() {
+  localStorage.removeItem(TOKEN_KEY)
+  localStorage.removeItem(USER_KEY)
+  sessionStorage.removeItem(TOKEN_KEY)
+  sessionStorage.removeItem(USER_KEY)
+  apiClient.setAuthToken(null)
+}
+
+function toContextUser(role: string, safeUser: { id: string; name: string; email: string }): User {
+  return {
+    id: safeUser.id,
+    name: safeUser.name,
+    email: safeUser.email,
+    role,
+  }
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -64,59 +73,56 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    const storedUser = localStorage.getItem('user')
-    if (storedUser) {
+    const restore = async () => {
+      const token = localStorage.getItem(TOKEN_KEY)
+      if (!token) {
+        setIsLoading(false)
+        return
+      }
+      apiClient.setAuthToken(token)
       try {
-        setUser(JSON.parse(storedUser))
+        const response = await apiClient.me()
+        setUser(toContextUser(response.user.role, response.user))
+        localStorage.setItem(USER_KEY, JSON.stringify(toContextUser(response.user.role, response.user)))
       } catch {
-        localStorage.removeItem('user')
+        clearSession()
+      } finally {
+        setIsLoading(false)
       }
     }
-    setIsLoading(false)
+    restore()
   }, [])
 
-  const login = useCallback(async (email: string, _password: string, role: User['role']) => {
-    setIsLoading(true)
-    await new Promise((resolve) => setTimeout(resolve, 800))
-
-    const mockUser = MOCK_USERS[email] || {
-      id: Math.random().toString(36),
-      name: email.split('@')[0],
-      email,
-      role,
-      avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${email}`,
-      status: 'online' as const,
-    }
-
-    setUser(mockUser)
-    localStorage.setItem('user', JSON.stringify(mockUser))
-    setIsLoading(false)
+  const login = useCallback(async (email: string, password: string) => {
+    const response = await apiClient.login({ email, password })
+    const contextUser = toContextUser(response.user.role, response.user)
+    persistSession(contextUser, response.token)
+    setUser(contextUser)
+    return contextUser
   }, [])
 
   const register = useCallback(async (data: RegisterData) => {
-    setIsLoading(true)
-    await new Promise((resolve) => setTimeout(resolve, 1000))
-
-    const newUser: User = {
-      id: Math.random().toString(36),
+    const response = await apiClient.register({
       name: data.name,
       email: data.email,
+      password: data.password,
       role: data.role,
-      avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${data.email}`,
-      status: 'online',
-      organizationId: data.organizationName ? `org-${Math.random().toString(36)}` : undefined,
-    }
-
-    setUser(newUser)
-    localStorage.setItem('user', JSON.stringify(newUser))
-    setIsLoading(false)
+      ...(data.organizationName ? { company: data.organizationName } : {}),
+    })
+    const contextUser = toContextUser(response.user.role, response.user)
+    persistSession(contextUser, response.token)
+    setUser(contextUser)
+    return contextUser
   }, [])
 
-  const logout = useCallback(() => {
-    localStorage.removeItem('user')
-    localStorage.removeItem('token')
-    sessionStorage.removeItem('user')
-    sessionStorage.removeItem('token')
+  const logout = useCallback(async () => {
+    try {
+      await apiClient.logout()
+    } catch {
+      // Stateless JWT: server holds no session state; proceed with
+      // client-side credential removal regardless of API outcome.
+    }
+    clearSession()
     setUser(null)
   }, [])
 
@@ -131,7 +137,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser((prev) => {
         if (!prev) return prev
         const next = { ...prev, ...data }
-        localStorage.setItem('user', JSON.stringify(next))
+        localStorage.setItem(USER_KEY, JSON.stringify(next))
         return next
       })
     },

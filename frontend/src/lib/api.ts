@@ -1,5 +1,5 @@
 // API configuration and client for the frontend
-// Supports future integration with backend at http://localhost:3001
+// Backend integration at http://localhost:3001 (pinned public URL via VITE_API_BASE_URL)
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001'
 const API_PATH = '/api'
@@ -18,11 +18,28 @@ export interface ApiResponse<T> {
   statusCode?: number
 }
 
+// Carries the HTTP status and the server-provided (safe) message so
+// authentication flows can distinguish 400/401/403/409 handling.
+export class ApiError extends Error {
+  statusCode: number
+
+  constructor(message: string, statusCode: number) {
+    super(message)
+    this.name = 'ApiError'
+    this.statusCode = statusCode
+  }
+}
+
 export class ApiClient {
   private baseURL: string
+  private authToken: string | null = null
 
   constructor(baseURL: string = API_BASE_URL) {
     this.baseURL = baseURL
+  }
+
+  setAuthToken(token: string | null) {
+    this.authToken = token
   }
 
   private async request<T>(
@@ -30,9 +47,12 @@ export class ApiClient {
     options: RequestInit = {}
   ): Promise<T> {
     const url = `${this.baseURL}${path}`
-    const headers = {
+    const headers: Record<string, string> = {
       'Content-Type': 'application/json',
-      ...options.headers,
+      ...((options.headers as Record<string, string>) || {}),
+    }
+    if (this.authToken) {
+      headers['Authorization'] = `Bearer ${this.authToken}`
     }
 
     try {
@@ -41,15 +61,22 @@ export class ApiClient {
         headers,
       })
 
+      const body = await response.json().catch(() => null)
+
       if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+        throw new ApiError(
+          body?.message || `HTTP ${response.status}: ${response.statusText}`,
+          response.status
+        )
       }
 
-      const data = await response.json()
-      return data as T
+      return body as T
     } catch (error) {
+      if (error instanceof ApiError) {
+        throw error
+      }
       console.error(`API request failed: ${path}`, error)
-      throw error
+      throw new ApiError('Unable to reach the server. Please try again.', 0)
     }
   }
 
@@ -87,12 +114,49 @@ export class ApiClient {
     return this.get(`${apiConfig.healthEndpoint}`)
   }
 
-  // Future API endpoints (to be implemented in later phases)
-  // auth: login, logout, register
-  // interviews: create, list, get, update, delete
-  // users: create, list, get, update, delete
-  // reports: generate, list, get
-  // monitoring: events, alerts, evidence
+  // Authentication (Phase 6)
+  async register(data: {
+    name: string
+    email: string
+    password: string
+    role: string
+    company?: string
+  }): Promise<AuthResponse> {
+    return this.post('/api/auth/register', data)
+  }
+
+  async login(data: { email: string; password: string }): Promise<AuthResponse> {
+    return this.post('/api/auth/login', data)
+  }
+
+  async logout(): Promise<ApiResponse<{ message: string }>> {
+    return this.post('/api/auth/logout')
+  }
+
+  async me(): Promise<MeResponse> {
+    return this.get('/api/auth/me')
+  }
+}
+
+export interface AuthUserShape {
+  id: string
+  name: string
+  email: string
+  role: string
+  status?: string
+  created_at?: string
+  updated_at?: string
+}
+
+export interface AuthResponse {
+  status: 'ok'
+  token: string
+  user: AuthUserShape
+}
+
+export interface MeResponse {
+  status: 'ok'
+  user: AuthUserShape
 }
 
 export const apiClient = new ApiClient()

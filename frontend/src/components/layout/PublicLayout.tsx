@@ -5,7 +5,7 @@ import { Menu, X, Sun, Moon, Monitor, Shield, BarChart2, LogOut } from 'lucide-r
 import { Button } from '@/components/ui/Button'
 import { Avatar, AvatarGroup } from '@/components/ui/Avatar'
 import { useTheme } from '@/hooks/useTheme'
-import { useAuth } from '@/hooks/useAuth'
+import { useAuth, getRoleDashboardPath } from '@/hooks/useAuth'
 
 const navigation = [
   { name: 'Features', href: '/#features' },
@@ -64,16 +64,15 @@ export function PublicLayout() {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [userMenuOpen])
 
-  const handleUserMenuSelect = (value: string) => {
+  const handleUserMenuSelect = async (value: string) => {
     setUserMenuOpen(false)
     if (value === 'signout') {
-      logout()
+      await logout()
       navigate('/', { replace: true })
       return
     }
     if (user) {
-      const dashboardPath =
-        user.role === 'hr' ? '/hr/dashboard' : user.role === 'interviewer' ? '/interviewer/dashboard' : '/interviewee/dashboard'
+      const dashboardPath = getRoleDashboardPath(String(user.role))
       const settingsPath =
         user.role === 'hr' ? '/hr/settings' : user.role === 'interviewer' ? '/interviewer/settings' : '/interviewee/settings'
       if (value === 'dashboard') navigate(dashboardPath)

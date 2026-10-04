@@ -79,6 +79,51 @@ async function assertEventReferences(db, interviewId, eventIds) {
   }
 }
 
+export async function findUserByEmail(email) {
+  const db = requireDatabase();
+  if (!isNonEmptyString(email)) return null;
+  return db.collection(COLLECTIONS.USERS).findOne({ email: email.trim().toLowerCase() });
+}
+
+export async function findUserById(userId) {
+  const db = requireDatabase();
+  if (!isNonEmptyString(userId)) return null;
+  return db.collection(COLLECTIONS.USERS).findOne({ _id: userId });
+}
+
+// Safe user representation: never includes password_hash or other
+// authentication internals (SRS-SEC-003; data-minimization DEC-012).
+export function toSafeUser(userDoc) {
+  if (!userDoc) return null;
+  return {
+    id: userDoc._id,
+    name: userDoc.name,
+    email: userDoc.email,
+    role: userDoc.role,
+    status: userDoc.status,
+    created_at: userDoc.created_at,
+    updated_at: userDoc.updated_at,
+  };
+}
+
+export async function deleteUserById(userId) {
+  const db = requireDatabase();
+  if (!isNonEmptyString(userId)) throw new PersistenceError('user_id is required', 'INVALID_FIELD');
+  await db.collection(COLLECTIONS.USERS).deleteOne({ _id: userId });
+}
+
+export async function findRecruiterByUserId(userId) {
+  const db = requireDatabase();
+  if (!isNonEmptyString(userId)) return null;
+  return db.collection(COLLECTIONS.RECRUITERS).findOne({ user_id: userId });
+}
+
+export async function findCandidateByUserId(userId) {
+  const db = requireDatabase();
+  if (!isNonEmptyString(userId)) return null;
+  return db.collection(COLLECTIONS.CANDIDATES).findOne({ user_id: userId });
+}
+
 export async function createUser({ name, email, passwordHash, role, status } = {}) {
   const db = requireDatabase();
   if (!isNonEmptyString(name)) throw new PersistenceError('user.name is required', 'INVALID_FIELD');

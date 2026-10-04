@@ -207,8 +207,18 @@ GET /api
 | `ALLOWED_ORIGINS` | CORS origins (comma-separated) | `http://localhost:5173` | 3 |
 | `MONGODB_URI` | MongoDB connection string | `mongodb://127.0.0.1:27017` | 5 |
 | `MONGODB_DB_NAME` | MongoDB database name | `interview_monitoring` | 5 |
-| `JWT_SECRET` | JWT signing secret | - | 6 (future) |
+| `JWT_SECRET` | JWT signing secret (required for auth; generate with `openssl rand -hex 32`) | - | 6 |
+| `JWT_EXPIRES_IN` | Token expiry | `24h` (provisional dev default) | 6 |
 | `AI_SERVICE_URL` | AI service endpoint | - | 4 (future) |
+
+## Authentication (Phase 6)
+
+- **Mechanism:** stateless JWT (HS256) via `jsonwebtoken`; `Authorization: Bearer` transport; tokens validated on every protected request and the current user re-resolved from the `users` collection.
+- **Password hashing:** Node built-in `crypto.scrypt` (`scrypt$<salt>$<hash>`); plaintext is never stored, logged or returned.
+- **Endpoints:** `POST /api/auth/register`, `POST /api/auth/login` (public); `POST /api/auth/logout`, `GET /api/auth/me` (authenticated).
+- **RBAC:** `authenticate()` + `authorize(...roles)` middleware; product roles `hr/interviewer/interviewee` mapped from the stored SRS roles (`recruiter/candidate/interviewer/admin` — see DEC-026). Verification endpoints: `GET /api/rbac/hr-only`, `/interviewer-only`, `/interviewee-only`, `/interview/:id`.
+- **Logout:** client-side credential removal; stateless JWT server-side revocation is not implemented (tokens valid until expiry — documented limitation).
+- **Demo accounts:** run `node scripts/seed-demo-users.js` (from the repository root, MongoDB running) to create `hr@demo.com`, `interviewer@demo.com`, `candidate@demo.com` (password `Demo123456`).
 
 ## CORS Configuration
 
@@ -273,14 +283,13 @@ The server handles termination signals gracefully:
   - `/ready` readiness endpoint (database connectivity)
   - Persistence test suite (synthetic data, dedicated test database, guarded cleanup)
 
-- ⏳ **Phase 6**: Authentication & RBAC (NOT STARTED)
+- ✅ **Phase 6**: Authentication & RBAC (COMPLETE — JWT, scrypt, auth/role middleware, RBAC verification endpoints)
 - ⏳ **Phase 7**: Interview Management (NOT STARTED)
 
 ## Future Endpoints (Planned)
 
 The following endpoints will be implemented in future phases:
 
-- **Phase 6**: `/api/auth/*` - Authentication
 - **Phase 7**: `/api/interviews/*` - Interview management
 - **Phase 7**: `/api/users/*` - User management
 - **Phase 18**: `/api/monitoring/*` - Live monitoring
@@ -301,7 +310,7 @@ The following endpoints will be implemented in future phases:
 - Never commit `.env` files
 - Use environment variables for secrets
 - Validate all user inputs
-- Implement proper authentication (Phase 6)
+- Authentication implemented (Phase 6): scrypt hashing, JWT, backend-enforced RBAC
 - Use parameterized queries (Phase 5)
 
 ## Testing Strategy
@@ -314,6 +323,8 @@ Current tests cover:
 - Error response format
 - MongoDB connection (success + graceful failure)
 - Persistence of all nine collections with reference validation
+- Authentication: password hashing, JWT handling, role mapping (unit)
+- Authentication/RBAC: registration, login, logout, current user, protected routes, cross-role denial, resource-authorization foundation, stateless logout limitation (integration, dedicated test database)
 - Interview-session reference enforcement for monitoring events (DB-VAL-001)
 - Timestamp persistence, baseline index existence, test-data cleanup
 

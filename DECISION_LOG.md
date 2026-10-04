@@ -643,3 +643,268 @@ Specification §(severity placeholders TBD), CLAUDE.md §5/§6/§7,
 DEC-005, DEC-006, DEC-007, DEC-012, DEC-015.
 
 ---
+
+## DEC-024 — Phase 6 Authentication Mechanism: Stateless JWT (HS256)
+
+**Status:** APPROVED (by implementation; SRS-SEC-010 defers the exact
+mechanism to architecture/privacy decisions)
+**Date:** 2026-10-04
+**Phase:** Phase 6 — Authentication & RBAC
+
+**Context:**
+SRS-SEC-010 and System Architecture ("exact mechanism is SRS/TBD")
+delegate the session/token mechanism to an implementation decision. The
+Database Specification documents no dedicated sessions collection (the
+nine Phase 5 collections are users, recruiters, candidates,
+interview_sessions, monitoring_events, ai_analysis_results, alerts,
+evidence, final_reports). CORS already allows the Authorization header
+with credentials.
+
+**Decision:**
+Stateless JWT (HS256) via the standard `jsonwebtoken` library. Tokens
+are transported in the `Authorization: Bearer` header, carry only `sub`
+(user id), and are validated on every protected request; the current
+user and role are re-resolved from the users collection (source of
+truth; stale-role and deleted-account risk avoided). The signing secret
+is server-side env only (`JWT_SECRET`; auth endpoints return 503 with a
+non-secret message when unconfigured; `/health` unaffected). Token
+expiry is env-driven (`JWT_EXPIRES_IN`, dev default `24h`,
+provisional). Logout is client-side credential removal; the
+`/api/auth/logout` endpoint validates the credential and returns
+success. Server-side token revocation is NOT implemented and is
+documented as a limitation (tokens remain valid until expiry).
+
+**Alternatives:**
+- MongoDB-backed server-side sessions (rejected: requires an
+  undocumented sessions collection and cleanup machinery; more moving
+  parts than the phase needs).
+- Hand-rolled HMAC tokens (rejected: custom cryptographic algorithms are
+  prohibited).
+- Cookie sessions (rejected: same collection/infra cost as server
+  sessions; Bearer header already allowed by the existing CORS config).
+
+**Rationale:**
+- Smallest architecture compatible with the approved documents (no new
+  collection, no session store, standard library).
+- Per-request user resolution keeps authorization correct without
+  refresh/revocation machinery in this phase.
+
+**Impact:**
+- `backend/package.json` gains one runtime dependency (`jsonwebtoken`).
+- Logout invalidates the client credential; tokens remain technically
+  valid until expiry (documented limitation; tested).
+- Production token policy (expiry, refresh, revocation) remains TBD
+  (SRS-SEC-010).
+
+**Verification:**
+- 45/45 RBAC integration tests + 17/17 unit tests pass, including
+  malformed/expired/wrong-secret/missing-secret token handling and the
+  documented stateless logout limitation.
+- Live verification: login for all three roles, protected/cross-role
+  matrix, logout 200.
+
+**Related requirements:**
+SRS-SEC-010, SRS-FR-001/002, System Architecture (§Auth & Access, §
+session security), Zero-Cost Infrastructure Plan §16, CLAUDE.md §8/§11,
+DEC-004, DEC-011, DEC-015, DEC-021.
+
+---
+
+## DEC-025 — Phase 6 Password Hashing: Node Built-in scrypt
+
+**Status:** APPROVED (by implementation)
+**Date:** 2026-10-04
+**Phase:** Phase 6 — Authentication & RBAC
+
+**Context:**
+SRS-SEC-003 requires standard secure password-storage practices. The
+backend had no password-hashing dependency. Node's built-in
+`node:crypto` provides scrypt (RFC 7914), an OWASP-recommended
+password-based KDF, so an established mechanism exists without adding a
+dependency.
+
+**Decision:**
+Use Node built-in `crypto.scrypt` with a per-user 16-byte random salt
+and 64-byte derived key, verified with `timingSafeEqual`; stored as
+`scrypt$<saltHex>$<hashHex>` in the existing users collection
+(`password_hash`). Plaintext passwords are never persisted, logged,
+returned or placed in frontend state; API responses use a safe
+representation that never includes password_hash.
+
+**Alternatives:**
+- `bcrypt` dependency (rejected: not installed; scrypt from the standard
+  library satisfies the requirement without a new dependency per the
+  dependency-discipline rule).
+- Argon2 native dependency (rejected: native build cost; not required by
+  any approved document).
+- Custom cryptographic hashing (rejected: prohibited).
+
+**Rationale:**
+- Standard, audited, NIST/OWASP-recognized KDF already available in the
+  runtime; timing-safe comparison prevents timing attacks.
+- Format prefix (`scrypt$`) allows future algorithm migration.
+
+**Impact:**
+- No new dependency; `backend/src/auth/password.js` is the single
+  hashing module.
+- Future rehashing/migration (e.g. to argon2id) can key off the stored
+  scheme prefix.
+
+**Verification:**
+- 17/17 unit tests pass: hash format, round-trip verify, wrong-password
+  rejection, unique per-hash salts, malformed-hash safety, no plaintext
+  in output; integration tests assert the stored document contains only
+  the scrypt hash and responses never contain password material.
+
+**Related requirements:**
+SRS-SEC-003, Database Specification §5/§19, CLAUDE.md §8/§10/§32,
+DEC-012, DEC-015.
+
+---
+
+## DEC-026 — Phase 6 Role Model Mapping and Provisional Permission Boundary
+
+**Status:** APPROVED (by implementation; resolves the SRS/UI-UX role
+vocabulary difference; UX-TBD-002 remains open)
+**Date:** 2026-10-04
+**Phase:** Phase 6 — Authentication & RBAC
+
+**Context:**
+The UI/UX Specification §3 defines the product roles as HR,
+Interviewer, Interviewee, while the backend storage roles established
+in Phase 5 (DEC-023, from the SRS role table) are `recruiter,
+candidate, interviewer, admin` — Phase 5 code, indexes and tests depend
+on that vocabulary. UX-TBD-002 leaves the exact HR vs Interviewer
+permission boundary open, and UX-TBD-001 leaves multi-role accounts
+open.
+
+**Decision:**
+- Backend storage keeps the SRS vocabulary (DEC-023 unchanged):
+  `recruiter, candidate, interviewer, admin`.
+- The application-facing auth/RBAC layer uses the UI/UX product roles:
+  `hr, interviewer, interviewee`, mapped in
+  `backend/src/auth/roles.js` (recruiter→hr, candidate→interviewee,
+  interviewer→interviewer, case-insensitive). Auth API responses and
+  frontend role-aware routing use product roles; the backend role stays
+  internal.
+- `authorize(...productRoles)` middleware enforces the product role on
+  the backend (DEC-011). No cross-role permissions are invented: each
+  role may access only its own role-protected endpoints.
+- `admin` has no product-role mapping in this phase (no admin product
+  UI in the UI/UX specification): admin accounts can authenticate but
+  are denied product-role endpoints (403). Self-registration as admin
+  is not possible (registration accepts only the three product roles).
+- One role per account (UX-TBD-001 treated as single-role); role
+  selection (UX-AUTH-003) is not implemented — the backend-assigned
+  role is the source of truth.
+
+**Alternatives:**
+- Rename backend roles to product roles (rejected: breaks Phase 5
+  persistence code/tests and silently reverses DEC-023).
+- Grant admin access to HR endpoints (rejected: invented cross-role
+  permission; UX-TBD-002 open).
+
+**Rationale:**
+- Preserves the recorded Phase 5 baseline and SRS traceability while
+  exposing the UI/UX product roles consistently at the application
+  boundary.
+- Phase 6 proves "authorized access works and unauthorized role access
+  is blocked" without inventing a permission matrix.
+
+**Impact:**
+- Phase 7+ reuses `authorize()`/`toProductRole()`; if UX-TBD-002 or
+  UX-TBD-001 are later decided, only `roles.js` and route guards change.
+
+**Verification:**
+- Full cross-role denial matrix verified by integration tests and live
+  curl checks (403 vs 401 distinction; admin authenticate-but-denied).
+- Role-mapping unit tests pass (17/17).
+
+**Related requirements:**
+UI/UX Specification §3/§7 (UX-AUTH-002/003, role-security rule,
+UX-TBD-001/002), SRS role table, SRS-SEC-002, Database Specification §5,
+CLAUDE.md §2/§3, DEC-011, DEC-023.
+
+---
+
+## DEC-027 — Phase 6 Registration Persistence, Auth UI Cleanup and Resource-Authorization Foundation
+
+**Status:** APPROVED (by implementation)
+**Date:** 2026-10-04
+**Phase:** Phase 6 — Authentication & RBAC
+
+**Context:**
+Phase 6 requires authentication-related persistence using the existing
+users collection. The existing Phase 2 signup flow collects a company
+name for HR accounts (Database Spec documents the User → Recruiter
+relationship and a recruiters collection), and the resource-ownership
+test required by Phase 6 ("Interviewer cannot access unauthorized
+interview") maps to the documented interview_sessions.recruiter_id /
+candidate_id relationships. No interviewer-assignment relationship is
+documented until Phase 8.
+
+**Decision:**
+- Registration persists to the users collection only (name, email,
+  password_hash, role, status 'active', timestamps). Additionally, HR
+  registration creates the linked recruiter profile (company preserved)
+  and Interviewee registration the linked candidate profile, via the
+  existing Phase 5 persistence functions — establishing the documented
+  User → Recruiter/Candidate relationships. On unexpected profile
+  failure the created user is removed (registration fails cleanly,
+  no orphaned accounts). No second authentication collection.
+- Registration validation: required fields, email format, duplicate
+  email → 409, password ≥ 8 chars, only the three product roles.
+  Duplicate-email rejection is intentional (task requirement) —
+  registration is not enumeration-sensitive in the same way login is.
+- Login uses identical safe messaging ("Invalid email or password") for
+  unknown account and wrong password (no enumeration).
+- Auth UI cleanups (existing product flow): sign-in role selector
+  removed (backend role is the source of truth; UX-AUTH-002), OAuth
+  provider buttons removed (UX-AUTH-001: only if implemented; OAuth out
+  of scope), dead forgot-password link removed (password reset out of
+  scope), sign-up demo buttons removed (duplicate registration would
+  409), sign-in demo accounts retained and seeded with real hashed
+  credentials via `scripts/seed-demo-users.js`, dead "Remember me"
+  checkbox removed (token persistence is uniform).
+- Resource-authorization foundation: `backend/src/auth/resourceAccess.js`
+  (`authorizeInterviewAccess`) + `GET /api/rbac/interview/:id` — access
+  to a specific interview uses ONLY the documented relationships
+  (recruiter-owner via the user's recruiter profile, candidate-participant
+  via the candidate profile). Interviewers are denied in this phase (no
+  documented assignment relationship exists until Phase 8). The route
+  is an explicit, isolated Phase 6 verification endpoint — not interview
+  management (Phase 7).
+
+**Alternatives:**
+- Users-only persistence, drop the company field (rejected: silently
+  discards user-provided data from the existing product flow).
+- Allow interviewer access to specific interviews via an invented
+  assignment field (rejected: interview assignment semantics are
+  Phase 8).
+- Keep OAuth/forgot-password mock UI (rejected: non-functional controls
+  mislead users; UX-AUTH-001 constrains provider buttons).
+
+**Rationale:**
+- Reuses existing Phase 5 persistence exactly as documented; no new
+  collections; no invented semantics; the ownership relationships the
+  Phase 6 test requires are the documented ones.
+
+**Impact:**
+- Phase 7 builds interview management on `authorizeInterviewAccess()`;
+  Phase 8 adds interviewer assignment and extends the access rules.
+- Auth UI is now fully functional against the real backend.
+
+**Verification:**
+- Integration tests: linked profiles created; ownership matrix (owner
+  200 / participant 200 / non-owner 403 / interviewer 403 / unknown 404
+  / unauthenticated 401); registration validation and duplicate
+  rejection; safe login messaging; live registration + /me verified.
+- `scripts/seed-demo-users.js` run successfully (idempotent).
+- Frontend build/lint pass; logout handlers deterministic.
+
+**Related requirements:**
+SRS-FR-001/002, SRS-SEC-001/002/003, Database Specification §5/§6/§7,
+UI/UX Specification §7 (UX-AUTH-001/002), IMPLEMENTATION_PLAN.md Phase 6,
+CLAUDE.md §5/§6/§8, DEC-011, DEC-012, DEC-015, DEC-023.
+
+---

@@ -4,10 +4,10 @@
 
 ## Current State
 
-- **Current stage:** Phase 5 COMPLETE → Ready for Phase 6 (Authentication & RBAC)
-- **Current phase:** Phase 5 — MongoDB (persistence foundation)
+- **Current stage:** Phase 6 COMPLETE → Ready for Phase 7 (HR Product)
+- **Current phase:** Phase 6 — Authentication & RBAC
 - **Overall status:** IN PROGRESS
-- **MVP:** NOT STARTED
+- **MVP:** IN PROGRESS (authentication/role foundation established)
 - **V2:** NOT STARTED
 - **SaaS/Enterprise:** NOT STARTED
 
@@ -28,7 +28,7 @@ Plan v1.0 - \[x\] Startup/Product Roadmap v1.0
 |   3 | Node/Express Backend Foundation  | COMPLETE    | Express app, health endpoint, CORS, error handling, tests |
 |   4 | Python/FastAPI AI Service        | COMPLETE    | 24/24 pytest pass, uvicorn cold start verified, /health + /ready live on :8000, OpenAPI docs 200 |
 |   5 | MongoDB                          | COMPLETE    | MongoDB 8.0.4 local (127.0.0.1:27017), 9 collections, 19 baseline indexes, 43/43 tests pass, /ready live, /health unchanged |
-|   6 | Authentication & RBAC            | NOT STARTED | —            |
+|   6 | Authentication & RBAC            | COMPLETE    | JWT (HS256) + scrypt hashing, auth/role middleware, protected routes, role-aware frontend routing, 62 new tests; 105/105 backend suite pass |
 |   7 | HR Product                       | NOT STARTED | —            |
 |   8 | Interviewer Product              | NOT STARTED | —            |
 |   9 | Candidate/Interviewee Product    | NOT STARTED | —            |
@@ -128,7 +128,7 @@ After every phase, update: - status - implementation summary -
 tests/verification - acceptance criteria - limitations - blockers -
 human actions - commit/milestone - next phase
 
-**Last state:** Phase 5 complete. MongoDB persistence foundation established: local MongoDB Community Server 8.0.4 (127.0.0.1:27017), official `mongodb` Node.js driver 6.21.0, env-driven connection lifecycle with graceful failure/shutdown, all nine documented collections with application-level reference validation, 19 baseline indexes, and a separate `/ready` endpoint (existing `/health` unchanged). Persistence verified by a 43/43-test suite (synthetic data, dedicated `_test` database, guarded cleanup). Regression verified: Phase 3 backend tests pass, backend live on :3001, AI service healthy on :8000, frontend accessible at the pinned canonical URL. Ready for Phase 6 (Authentication & RBAC).
+**Last state:** Phase 6 complete. Authentication & RBAC established: stateless JWT (HS256, `jsonwebtoken`) with Bearer transport, scrypt password hashing (Node built-in crypto), `authenticate()`/`authorize()` middleware enforcing the UI/UX product roles (hr/interviewer/interviewee) mapped from the SRS backend role vocabulary, `/api/auth/*` (register/login/logout/me) plus explicit `/api/rbac/*` verification endpoints, interview resource-authorization foundation via documented recruiter/candidate ownership, and role-aware frontend routing wired to the real backend (mock auth removed). Verified by a 105/105-test suite (62 new auth/RBAC tests, synthetic users, dedicated `_test` databases, guarded cleanup) plus live role-matrix and security-audit checks. Regression verified: Phase 3 backend tests pass (`/health` unchanged, backend live on :3001), Phase 4 AI service healthy on :8000, Phase 5 MongoDB/persistence intact, Phase 2 frontend builds and serves at the pinned canonical URL. Ready for Phase 7 (HR Product).
 
 ## Phase 3 Details
 
@@ -329,3 +329,172 @@ See `PHASE_3_VERIFICATION.md` for manual verification steps. User must:
 - No authentication/RBAC (Phase 6); no interview CRUD API (Phase 7); no real-time alert engine (Phase 16).
 
 **Next Phase:** Phase 6 — Authentication & RBAC (depends on Phases 2, 3, 5).
+
+## Phase 6 Details
+
+**Implementation Date:** 2026-10-04
+
+**Status:** COMPLETE — all acceptance gates verified.
+
+**Authentication Architecture (see DEC-024..027):**
+- Mechanism: stateless JWT (HS256) via `jsonwebtoken`; Bearer transport
+  (Authorization header; CORS already allowed it). Tokens carry only
+  `sub` (user id); the current user and role are resolved from the
+  users collection on every protected request.
+- Password hashing: Node built-in `crypto.scrypt` (16-byte random salt,
+  64-byte key, `timingSafeEqual` verification; stored as
+  `scrypt$<salt>$<hash>`). No plaintext is ever stored, logged or
+  returned; no custom cryptographic algorithms; no new hashing
+  dependency.
+- Logout: client-side credential removal (frontend clears token/user);
+  the `/api/auth/logout` endpoint validates the credential and returns
+  success. Stateless JWT server-side revocation is NOT implemented —
+  documented limitation (tokens remain valid until expiry; expiry is
+  env-driven `JWT_EXPIRES_IN`, dev default 24h, provisional).
+- JWT secret: server-side env only (`backend/.env`, untracked);
+  `.env.example` contains a placeholder; auth endpoints return 503 with
+  a non-secret message when unconfigured; `/health` unaffected.
+
+**Role Model:**
+- Backend storage keeps the SRS role vocabulary (DEC-023):
+  `recruiter, candidate, interviewer, admin`.
+- The application-facing layer uses the UI/UX product roles (§3):
+  `hr, interviewer, interviewee`, mapped via
+  `backend/src/auth/roles.js` (recruiter→hr, candidate→interviewee,
+  interviewer→interviewer). The frontend and API responses use product
+  roles; the backend role remains internal.
+- `admin` has no product-role mapping in this phase (no admin UI in the
+  UI/UX specification; UX-TBD-002 open): admin can authenticate but is
+  denied product-role endpoints (403). Self-registration as admin is
+  not possible (registration accepts only the three product roles).
+
+**Files Created:**
+- `backend/src/auth/password.js` — scrypt hash/verify (SRS-SEC-003)
+- `backend/src/auth/tokens.js` — JWT sign/verify (env secret, 503 when unconfigured)
+- `backend/src/auth/roles.js` — product↔backend role mapping
+- `backend/src/auth/middleware.js` — `authenticate()` (401s) + `authorize(...roles)` (403)
+- `backend/src/auth/resourceAccess.js` — interview resource-authorization foundation
+- `backend/src/routes/auth.js` — POST /register, POST /login, POST /logout, GET /me
+- `backend/src/routes/rbac.js` — GET /hr-only, /interviewer-only, /interviewee-only, /interview/:id (explicit Phase 6 verification endpoints, isolated from Phase 7 business routes)
+- `backend/tests/auth.test.js` — 17 unit tests (password hashing, tokens, role mapping)
+- `backend/tests/auth-rbac.test.js` — 45 integration tests (full role matrix, dedicated `interview_monitoring_auth_test` database, guarded cleanup, ephemeral port)
+- `scripts/seed-demo-users.js` — idempotent synthetic demo accounts for browser verification
+
+**Files Modified:**
+- `backend/src/db/persistence.js` — added `findUserByEmail`, `findUserById`,
+  `toSafeUser` (safe representation; never exposes password_hash),
+  `deleteUserById`, `findRecruiterByUserId`, `findCandidateByUserId`
+- `backend/src/routes/index.js` — mounted `/auth` + `/rbac` (existing middleware/health/CORS/error handling untouched)
+- `backend/package.json` / `package-lock.json` — added `jsonwebtoken@^9.0.3` (standard JWT implementation; hand-rolling would be custom crypto)
+- `backend/.env.example` / `backend/.env` — JWT_SECRET (placeholder only in .env.example; real value untracked in .env), JWT_EXPIRES_IN
+- `frontend/src/lib/api.ts` — `ApiError` (statusCode + safe server message), token header handling (`setAuthToken`), auth endpoints
+- `frontend/src/hooks/useAuth.tsx` — real backend auth: restore-on-load via `/api/auth/me`, login/register return the backend-assigned role, async logout (API + local clear), `getRoleDashboardPath`
+- `frontend/src/App.tsx` — `PublicRoute authRedirect` (authenticated users on /signin /signup are routed to their role dashboard — UX-AUTH-002)
+- `frontend/src/pages/auth/SignInPage.tsx` — role selector removed (backend role is the source of truth), provider buttons/dead forgot-password link removed, safe error messaging, demo accounts seeded with real credentials
+- `frontend/src/pages/auth/SignUpPage.tsx` — wired to real registration, 409 duplicate-email handling, demo/provider buttons removed
+- `frontend/src/components/layout/{PublicLayout,HRLayout,InterviewerLayout,IntervieweeLayout}.tsx` — logout handlers await `logout()` before navigating (deterministic sign-out with the async auth flow)
+
+**Protected API surface (Phase 6):**
+- Public: `POST /api/auth/register`, `POST /api/auth/login`
+- Authenticated: `POST /api/auth/logout`, `GET /api/auth/me`
+- Role-protected verification endpoints: `GET /api/rbac/hr-only`,
+  `GET /api/rbac/interviewer-only`, `GET /api/rbac/interviewee-only`
+- Resource-authorization foundation: `GET /api/rbac/interview/:id`
+  (recruiter-owner / candidate-participant via the documented
+  interview_sessions.recruiter_id / candidate_id relationships only;
+  Interviewer denied — no documented assignment relationship exists
+  until Phase 8)
+- `GET /health` and `GET /ready` unchanged.
+
+**Registration persistence:**
+- users collection only (Phase 6 scope; no second auth collection):
+  name, email (unique IDX-USR-001), password_hash (scrypt), role
+  (backend SRS vocabulary), status ('active' default), created_at,
+  updated_at.
+- HR registration additionally creates the linked recruiter profile
+  (company preserved from the existing product flow) and Interviewee
+  registration the linked candidate profile, via existing Phase 5
+  persistence functions, with compensation (created user removed) on
+  unexpected profile failure — documented in DEC-027.
+
+**Test Results (2026-10-04):**
+- Backend suite: **105/105 passed** (43 existing Phase 3+5 + 62 new
+  Phase 6: 17 unit + 45 RBAC integration). Synthetic users only
+  (`@example.local`, `@demo.com`); dedicated `interview_monitoring_auth_test`
+  database with guarded drop; deterministic and repeatable.
+- Verified in tests: registration success/duplicate/invalid/unsupported
+  role/short password; login per role/invalid password/unknown account
+  (same safe message — no enumeration); missing credentials; /me with
+  valid/malformed/expired/ghost tokens; plaintext persistence MUST NOT
+  occur; password_hash never in API responses; linked profiles; full
+  cross-role denial matrix (403 vs 401 distinction); interviewer denied
+  from a specific interview (403); unknown interview 404; admin
+  authenticate-but-denied; logout semantics including the documented
+  stateless limitation; /health + /ready regression.
+- Frontend: `tsc -b && vite build` passes; lint 0 errors (244
+  pre-existing warnings); no new frontend dependencies.
+
+**Live Verification (2026-10-04):** login for all three demo roles
+returns the correct backend-derived product role; HR→hr-only 200;
+Interviewer→hr-only 403; Interviewee→interviewee-only 200;
+HR→interviewee-only 403; unauthenticated→me 401; wrong password 401;
+logout 200; CORS preflight from the pinned frontend origin echoes
+`Access-Control-Allow-Origin` + `Authorization` allowed; backend logs
+contain no passwords/tokens/secrets.
+
+**Role Authorization Matrix (verified):**
+
+|  Scenario | Result |
+|-----------|--------|
+| Registration: valid user | 201 SUCCESS |
+| Registration: duplicate email | 409 REJECT |
+| Registration: invalid credentials/unsupported role | 400 REJECT |
+| Plaintext password persistence | MUST NOT OCCUR (verified: scrypt only) |
+| Login: valid HR / Interviewer / Interviewee | 200 SUCCESS (role from backend) |
+| Login: invalid password / unknown account | 401 REJECT (same safe message) |
+| HR → HR-protected endpoint | 200 ALLOW |
+| Interviewer → Interviewer-protected endpoint | 200 ALLOW |
+| Interviewee → Interviewee-protected endpoint | 200 ALLOW |
+| Unauthenticated → protected endpoint | 401 REJECT |
+| Interviewer/Interviewee → HR-protected | 403 REJECT |
+| HR/Interviewee → Interviewer-protected | 403 REJECT |
+| HR/Interviewer → Interviewee-protected | 403 REJECT |
+| Interviewee → Interviewer-only | 403 REJECT |
+| Owning HR → specific interview | 200 ALLOW |
+| Participating Interviewee → specific interview | 200 ALLOW |
+| Non-owner HR → specific interview | 403 REJECT |
+| Interviewer → specific interview | 403 REJECT (assignment is Phase 8) |
+| Authenticated → logout | 200; state cleared client-side |
+| After logout → protected (normal client flow) | REJECT (client credential removed) |
+| admin → product-role endpoints | 403 REJECT (no product mapping; UX-TBD-002) |
+
+**Security Audit (2026-10-04):**
+- ✅ No plaintext passwords anywhere (DB verified: scrypt hashes only)
+- ✅ Real JWT secret not committed (only in untracked `backend/.env`; `.env.example` placeholder; `git check-ignore` confirms; diff grep confirms)
+- ✅ No secrets in frontend source/env; server-side only
+- ✅ No password hashes in API responses (register/login/me tested)
+- ✅ No authentication bypass: all protected routes use `authenticate` (+ `authorize`/resource checks)
+- ✅ Backend is the authorization boundary (frontend route hiding is UX only; enforced by tests)
+- ✅ 401 (unauthenticated) and 403 (unauthorized) kept distinct
+- ✅ No tokens/passwords/secrets in logs (verified live + code review)
+- ✅ No unsafe CORS changes (preflight echo verified; Phase 3 config preserved)
+- ✅ `/health` unchanged
+
+**Regression Verification (2026-10-04):**
+- Phase 3: backend starts, listens on 3001, `/health` 200 unchanged, `/ready` 200, CORS/error middleware/graceful shutdown preserved, all Phase 3 tests pass
+- Phase 4: AI service untouched and healthy on 8000 (`/ready` → ok)
+- Phase 5: MongoDB connected, users collection compatible (same fields/indexes), all Phase 5 persistence tests pass, test databases dropped after runs, dev database intact
+- Phase 2: frontend builds (`tsc -b && vite build`), lint 0 errors, serving 200 locally (:5180) and at the pinned URL; single BrowserRouter; auth UI now wired to the real backend
+
+**Known Limitations / TBDs:**
+- Stateless JWT: no server-side token revocation (logout is client-side credential removal; tokens valid until expiry). Token blocklist/refresh-token rotation is future work if required.
+- Token expiry (dev default 24h) is provisional — production values are TBD (SRS-SEC-010).
+- Interviewer assignment/authorization for specific interviews is deferred to Phase 8 (no documented assignment relationship exists yet).
+- HR vs Interviewer permission boundary remains UX-TBD-002 (open); no cross-role permissions invented.
+- Multi-role accounts (UX-TBD-001) and role selection (UX-AUTH-003) not implemented; one role per account (backend-assigned role is the source of truth).
+- admin role: recognized by SRS but has no product UI or product-role mapping in this phase.
+- OAuth/social login not implemented (UX-AUTH-001: provider buttons only if implemented).
+- Password reset/email verification/MFA not in Phase 6 scope.
+- `npm audit` reports 3 pre-existing high-severity dev-only advisories (nodemon→chokidar→braces, from Phase 3); unrelated to authentication; not fixed to avoid a breaking nodemon change outside this phase's scope.
+
+**Next Phase:** Phase 7 — HR Product (depends on Phase 6).
