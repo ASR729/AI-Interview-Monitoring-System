@@ -193,6 +193,15 @@ export class ApiClient {
   async getAssignedInterviewReport(id: string): Promise<InterviewReportResponse> {
     return this.get(`/api/interviewer/interviews/${encodeURIComponent(id)}/report`)
   }
+
+  // Candidate/Interviewee product (Phase 9)
+  async listMyInterviews(): Promise<CandidateInterviewListResponse> {
+    return this.get('/api/interviewee/interviews')
+  }
+
+  async getMyInterview(id: string): Promise<CandidateInterviewResponse> {
+    return this.get(`/api/interviewee/interviews/${encodeURIComponent(id)}`)
+  }
 }
 
 export interface AuthUserShape {
@@ -310,6 +319,28 @@ export interface InterviewReport {
 export interface InterviewReportResponse {
   status: 'ok'
   report: InterviewReport
+}
+
+export interface CandidateInterview {
+  id: string
+  title: string
+  status: string
+  scheduled_start_at: string | null
+  started_at: string | null
+  ended_at: string | null
+  interviewer: InterviewInterviewerSummary | null
+  created_at: string
+  updated_at: string
+}
+
+export interface CandidateInterviewResponse {
+  status: 'ok'
+  interview: CandidateInterview
+}
+
+export interface CandidateInterviewListResponse {
+  status: 'ok'
+  interviews: CandidateInterview[]
 }
 
 export const apiClient = new ApiClient()

@@ -4,10 +4,10 @@
 
 ## Current State
 
-- **Current stage:** Phase 8 COMPLETE → awaiting approval for Phase 9 (Candidate/Interviewee Product)
-- **Current phase:** Phase 8 — Interviewer Product
+- **Current stage:** Phase 9 COMPLETE → awaiting approval for Phase 10 (Interview Room)
+- **Current phase:** Phase 9 — Candidate/Interviewee Product
 - **Overall status:** IN PROGRESS
-- **MVP:** IN PROGRESS (HR-side + interviewer-side interview workflows operational)
+- **MVP:** IN PROGRESS (HR, interviewer and candidate interview workflows operational; interview room next)
 - **V2:** NOT STARTED
 - **SaaS/Enterprise:** NOT STARTED
 
@@ -31,6 +31,7 @@ Plan v1.0 - \[x\] Startup/Product Roadmap v1.0
 |   6 | Authentication & RBAC            | COMPLETE    | JWT (HS256) + scrypt hashing, auth/role middleware, protected routes, role-aware frontend routing, 62 new tests; 105/105 backend suite pass |
 |   7 | HR Product                       | COMPLETE    | 145/145 backend tests pass (40 new Phase 7); HR dashboard/interview CRUD/invitation live against MongoDB; ownership + cross-role matrix verified; frontend build + lint pass |
 |   8 | Interviewer Product              | COMPLETE    | 177/177 backend tests pass (32 new Phase 8); interviewer assigned/upcoming/ongoing/completed views + permitted report access live; interviewer assignment (interviewer_id, DEC-029) enforced on the backend; frontend build + lint pass |
+|   9 | Candidate/Interviewee Product    | COMPLETE    | 192/192 backend tests pass (15 new Phase 9); candidate dashboard/My Interviews/assigned interview/preparation/monitoring disclosure live; real browser system check (camera/mic/connectivity/browser) with mandatory gating; ownership + cross-role verified; build + lint pass |
 |   8 | Interviewer Product              | NOT STARTED | —            |
 |   9 | Candidate/Interviewee Product    | NOT STARTED | —            |
 |  10 | Interview Room                   | NOT STARTED | —            |
@@ -129,7 +130,7 @@ After every phase, update: - status - implementation summary -
 tests/verification - acceptance criteria - limitations - blockers -
 human actions - commit/milestone - next phase
 
-**Last state:** Phase 8 complete. Interviewer product operational on the existing `interview_sessions` infrastructure: `interview_sessions.interviewer_id` (nullable scalar ref to `users._id`, DEC-029) records the assignment made by the owning HR user (`POST /api/interviews/:id/assign`, optional `interviewerId` at creation, `GET /api/interviewers` selection list); the interviewer product exposes assigned/upcoming/ongoing/completed views (`GET /api/interviewer/interviews`, `GET /api/interviewer/interviews/:id`) and permitted report access (`GET /api/interviewer/interviews/:id/report`, honest 404 until a report exists) with backend-enforced assigned-interview authorization. Frontend interviewer screens (Dashboard, My Interviews, Interview Detail, truthful Live Sessions/Reports placeholders) use real backend data with loading/empty/error states; fabricated Phase 2 mock monitoring data (risk scores, alerts, fake live sessions) was removed. Verified by a 177/177 backend suite (32 new Phase 8 tests in a dedicated `interview_monitoring_interviewer_test` database), live end-to-end assignment/visibility checks against the dev server, `tsc -b && vite build` passing, and lint 0 errors. Awaiting explicit approval before Phase 9.
+**Last state:** Phase 9 complete. Candidate/interviewee product operational: `GET /api/interviewee/interviews` and `GET /api/interviewee/interviews/:id` return only the authenticated candidate's interviews (candidate profile ↔ `interview_sessions.candidate_id` ownership enforced on the backend via `authorizeInterviewAccess`; body/query candidate identity cannot influence authorization). Candidate screens (Dashboard with next interview + preparation checklist + history, My Interviews, Interview Detail with preparation + neutral monitoring disclosure, System Check, History) use real backend data with loading/empty/error states. The System Check performs REAL browser capability checks (camera, microphone, connection, browser media/RTC APIs) with mandatory-check gating (Continue enabled only when all required checks pass), per-check retry, recovery guidance, and a truthful Phase 10 completion boundary — no fake readiness values, no raw media persisted, screen sharing correctly omitted (not required by the implemented configuration). Verified by a 192/192 backend suite (15 new Phase 9 tests in a dedicated `interview_monitoring_candidate_test` database), live candidate-flow checks against the dev server, `tsc -b && vite build` passing, and lint 0 errors. Awaiting explicit approval before Phase 10.
 
 ## Phase 3 Details
 
@@ -609,3 +610,47 @@ contain no passwords/tokens/secrets.
 - Phase 9 (candidate/interviewee product, invitation consumption, system check) NOT started.
 
 **Next Phase:** Phase 9 — Candidate/Interviewee Product (depends on Phases 6–7). NOT STARTED — awaiting explicit approval.
+
+## Phase 9 Details
+
+**Implementation Date:** 2026-10-04
+
+**Status:** COMPLETE — all acceptance gates verified.
+
+**Backend (candidate APIs):**
+- `GET /api/interviewee/interviews` — the authenticated candidate's interviews (candidate profile requirement; `interview_sessions.candidate_id` scope; interviewer display name joined; no password material)
+- `GET /api/interviewee/interviews/:id` — authorized assigned-interview detail (title, status, schedule, `started_at`/`ended_at`, interviewer name); candidate ownership enforced via `authorizeInterviewAccess` (existing candidate branch, Phase 6)
+- Client-supplied candidate identity (body/query/URL) cannot influence authorization — verified by tests
+- Mounted at `/api/interviewee` (mirrors the Phase 8 interviewer namespace); no Phase 7/8 APIs changed
+
+**Database:** NO schema changes. `interview_sessions.candidate_id` (Phase 6/5 baseline) is the candidate association. No new collections, no new indexes. System check is client-side only — no readiness persistence exists in the documented schema.
+
+**Frontend:**
+- `frontend/src/pages/interviewee/DashboardPage.tsx` — rewritten from mock data to real `GET /api/interviewee/interviews`: next interview (title, schedule, interviewer, truthful status), Join/Open action gated to session state, Run System Check action, preparation checklist (camera/microphone/connection/browser/monitoring disclosure), recent completed history, loading/empty/error states with retry
+- `frontend/src/pages/interviewee/InterviewsPage.tsx` — rewritten: real assigned table (title, interviewer, schedule, status), search, open action, loading/empty/error states
+- `frontend/src/pages/interviewee/InterviewDetailPage.tsx` — new: interview metadata, interviewer, schedule, truthful session state ("The interview room will be available in the next stage"), preparation cards, Monitoring Disclosure (neutral, non-punitive language: observable signals, permission purposes, recovery guidance — no accusatory claims), Start System Check action
+- `frontend/src/pages/interviewee/SystemCheckPage.tsx` — REWRITTEN from a hardcoded fake-results mock to REAL browser capability checks:
+  - Camera (mandatory): `navigator.mediaDevices.getUserMedia({video:true})`; states: Checking/Ready/Permission Required/Unavailable/Failed; media tracks stopped immediately (no persistence); mandatory because webcam monitoring is the MVP core (CLAUDE.md §2, SRS §9.x: prevents continuation when camera is mandatory for the configured interview)
+  - Microphone (optional, checked): `getUserMedia({audio:true})`; same states; non-blocking baseline — audio analysis is a later phase and no configurable mic requirement exists in the implemented schema (SRS: "whether it blocks entry depends on the configured interview requirements")
+  - Connection (mandatory): `navigator.onLine` truthful reachability signal (Connected/Unavailable); exact connectivity metric remains TBD (UX-CAN-002) — no invented quality/threshold values
+  - Browser (mandatory): capability check — `navigator.mediaDevices.getUserMedia` + `RTCPeerConnection` presence; Unsupported state explains the exact missing capability; no invented browser allowlist (TBD preserved)
+  - Screen sharing: correctly NOT shown — not required by the implemented interview configuration (conditional per UX-CAN-002/PRD-FR-013)
+  - Continue gating: enabled only when all mandatory checks pass; per-check Retry + Run-all; recovery guidance on every failed state; completion state truthfully states the interview room comes in the next stage (no fake room navigation, no Phase 10 work)
+  - Refresh/direct-URL cannot falsely mark readiness: completion is client-side state that resets on reload; no later route exists to bypass into
+- `frontend/src/pages/interviewee/HistoryPage.tsx` — rewritten: the candidate's own completed sessions (real data; no integrity information/reports — product TBD)
+- `frontend/src/App.tsx` — route added: `/interviewee/interviews/:id` (interviewee-role protected)
+- Settings remains an existing placeholder screen
+
+**Test Results (2026-10-04):** Backend suite **192/192 passed** = 177 existing (Phases 3/5/6/7/8) + 15 new Phase 9 tests (`backend/tests/interviewee.test.js`: unauthenticated 401 per endpoint; HR/Interviewer 403 on candidate-only endpoints; candidate list/detail 200 with interviewer display; ownership isolation both directions; URL-modification, query-parameter and request-body bypass attempts denied without leaking interview data; query candidateId cannot influence authorization; nonexistent 404; orphan candidate user 403; lifecycle respected — completed not presented as active; /health + /ready regression). Dedicated `interview_monitoring_candidate_test` database; guarded drop; synthetic users only; dev database untouched. Frontend: `tsc -b && vite build` passes; lint 0 errors (133 pre-existing-style warnings, reduced from 171 after mock-data removal). System-check UI states verified live in the browser (camera/microphone permission prompts, ready/permission-required/unavailable states, Continue gating).
+
+**Live Verification (2026-10-04):** Demo candidate login → `GET /api/interviewee/interviews` returns the assigned interview with interviewer name; detail works; HR → candidate endpoints → 403; unauthenticated → 401; all three services healthy on pinned ports (3001/5180/8000).
+
+**Known Limitations / TBDs:**
+- Connectivity quality metric remains TBD (UX-CAN-002): only truthful `navigator.onLine` reachability is reported — no invented bandwidth/latency thresholds
+- Browser support matrix remains TBD (UX-CAN-002): capability-based validation only — no invented browser allowlist/version claims
+- Microphone blocking is a non-blocking baseline (SRS: depends on the configured interview requirements; no configurable requirement exists in the implemented schema — audio analysis is a later phase)
+- Screen sharing is conditional and NOT required by the implemented configuration; no screen-capture permission is requested (PRD-FR-013 belongs to later phases)
+- System-check completion is client-side state (no readiness persistence is documented; no schema change was made). The interview room (Phase 10) will enforce its own entry authorization
+- Interview Room, WebRTC, monitoring, alerts, evidence, reports: NOT implemented (Phases 10+)
+
+**Next Phase:** Phase 10 — Interview Room (depends on Phases 7–9). NOT STARTED — awaiting explicit approval.

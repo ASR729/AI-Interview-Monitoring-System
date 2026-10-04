@@ -508,6 +508,37 @@ export async function listInterviewsByInterviewer(interviewerUserId) {
   });
 }
 
+// Candidate/Interviewee product (Phase 9): assigned-interview listing for the
+// authenticated candidate (interview_sessions.candidate_id scope, Phase 6
+// ownership mapping). Joins the interviewer display name without exposing
+// authentication internals or candidate contact data.
+export async function listInterviewsByCandidate(candidateProfileId) {
+  const db = requireDatabase();
+  if (!isNonEmptyString(candidateProfileId)) throw new PersistenceError('candidate id is required', 'INVALID_FIELD');
+  const interviews = await db
+    .collection(COLLECTIONS.INTERVIEW_SESSIONS)
+    .find({ candidate_id: candidateProfileId })
+    .sort({ created_at: -1 })
+    .toArray();
+  if (interviews.length === 0) return [];
+  const interviewerIds = [...new Set(interviews.map((i) => i.interviewer_id).filter(Boolean))];
+  const users = await db
+    .collection(COLLECTIONS.USERS)
+    .find({ _id: { $in: interviewerIds } })
+    .project({ password_hash: 0 })
+    .toArray();
+  const userById = new Map(users.map((u) => [u._id, u]));
+  return interviews.map((interview) => ({
+    ...interview,
+    interviewer: interview.interviewer_id
+      ? {
+          id: interview.interviewer_id,
+          name: userById.get(interview.interviewer_id)?.name ?? null,
+        }
+      : null,
+  }));
+}
+
 // Interviewer product (Phase 8): permitted report retrieval. final_reports is
 // the documented collection (Database Specification §13); IDX-RPT-001 makes
 // this lookup unique per interview. Returns null when no report exists yet —

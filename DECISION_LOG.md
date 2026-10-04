@@ -1112,3 +1112,86 @@ ignoring config changes.
 
 **Related requirements:** Zero-Cost Infrastructure Plan, CLAUDE.md §8,
 DEC-013 (CORS).
+
+## DEC-031 — Phase 9 Candidate System-Check Model, Mandatory/Optional Baseline and Candidate API Surface
+
+**Status:** APPROVED (by implementation)
+**Date:** 2026-10-04
+**Phase:** Phase 9 — Candidate/Interviewee Product
+
+**Context:**
+Phase 9 requires the candidate system check (UX-CAN-002, PRD-FR-003,
+SRS-FR-006/007). The connectivity metric and browser support matrix are
+explicitly TBD, microphone blocking "depends on the configured interview
+requirements" and no configurable requirement schema exists in the
+implemented baseline, screen sharing is conditional on the implemented
+feature, and readiness persistence is not documented. The previous
+SystemCheckPage was a hardcoded fake-results mock (violating the no-fake
+system-check rule).
+
+**Decision:**
+- **No schema change.** System check is a client-side browser capability
+  flow; no readiness persistence is documented in the Database
+  Specification. No new collections, no new indexes. The existing
+  `interview_sessions.candidate_id` mapping (Phase 6/5) is the candidate
+  association.
+- **Mandatory checks:** camera (webcam monitoring is the MVP core per
+  CLAUDE.md §2 and SRS §9.x "prevents continuation if camera is mandatory
+  for the configured interview"), connection (truthful `navigator.onLine`
+  reachability — no invented quality/threshold values), browser capability
+  (`navigator.mediaDevices.getUserMedia` + `RTCPeerConnection` presence —
+  no invented browser allowlist; the TBD matrix is preserved).
+- **Microphone:** checked and displayed but optional (non-blocking baseline)
+  — audio analysis is a later phase and no configurable mic requirement
+  exists in the implemented schema (SRS: blocking "depends on the configured
+  interview requirements").
+- **Screen sharing:** NOT a required check — not required by the implemented
+  interview configuration (conditional per UX-CAN-002/PRD-FR-013); no
+  screen-capture permission is requested.
+- **Check states:** idle/checking/ready/permission_required/unavailable/failed
+  with per-check retry and recovery guidance; media tracks are stopped
+  immediately (no raw media persisted or uploaded); no monitoring events are
+  generated from readiness checks.
+- **Continue gating:** enabled only when all mandatory checks pass; completion
+  is truthful client-side state stating the interview room comes in the next
+  stage (Phase 10 boundary — no fake room, no bypass route exists).
+- **Candidate API surface:** `GET /api/interviewee/interviews` and
+  `GET /api/interviewee/interviews/:id` (candidate profile requirement +
+  `authorizeInterviewAccess` candidate branch) — mirrors the Phase 8
+  interviewer namespace; Phase 7/8 APIs unchanged. Client-supplied candidate
+  identity (body/query/URL) cannot influence authorization.
+- **Monitoring disclosure:** neutral, non-punitive language (observable
+  signals, permission purposes, recovery steps) — no accusatory or deceptive-
+  detection claims (CLAUDE.md §3/§36).
+
+**Alternatives:**
+- Persisting system-check results (rejected: not documented; would require a
+  schema change without approval).
+- Inventing connectivity thresholds/browser allowlists (rejected: TBD
+  preserved).
+- Making the microphone mandatory (rejected: unsupported by the implemented
+  configuration; SRS leaves blocking to the configured interview).
+- A screen-sharing check (rejected: screen sharing is not required by the
+  implemented feature).
+
+**Rationale:**
+- Smallest implementation satisfying PRD-FR-003/SRS-FR-006/007/UX-CAN-002
+  with real capability checks, honest TBD handling and the Phase 10 boundary.
+
+**Impact:**
+- Phase 10 (interview room) will enforce its own entry authorization; the
+  system-check completion state does not grant server-side access.
+- The readiness state model is a single-file implementation
+  (`SystemCheckPage.tsx`) — no abstraction framework introduced.
+
+**Verification:**
+- 192/192 backend tests (15 new Phase 9: auth/role/ownership/bypass matrix,
+  lifecycle handling, regression); frontend `tsc -b && vite build` + lint 0
+  errors; live candidate-flow verification on the dev server.
+
+**Related requirements:**
+UX-CAN-001/002 (§10.1/10.2), PRD-FR-003, SRS-FR-006/007, SRS §9.3
+(browser/device interface), IMPLEMENTATION_PLAN.md Phase 9, CLAUDE.md
+§2/§5/§6/§7/§36, DEC-005, DEC-011, DEC-023, DEC-029, DEC-030.
+
+---

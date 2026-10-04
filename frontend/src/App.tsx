@@ -32,6 +32,7 @@ import { InterviewerSettingsPage } from '@/pages/interviewer/SettingsPage'
 
 import { IntervieweeDashboardPage } from '@/pages/interviewee/DashboardPage'
 import { IntervieweeInterviewsPage } from '@/pages/interviewee/InterviewsPage'
+import { IntervieweeInterviewDetailPage } from '@/pages/interviewee/InterviewDetailPage'
 import { IntervieweeSystemCheckPage } from '@/pages/interviewee/SystemCheckPage'
 import { IntervieweeHistoryPage } from '@/pages/interviewee/HistoryPage'
 import { IntervieweeSettingsPage } from '@/pages/interviewee/SettingsPage'
@@ -130,6 +131,7 @@ export function App() {
               <Route element={<IntervieweeLayout />}>
                 <Route path="/interviewee/dashboard" element={<ProtectedRoute allowedRoles={['interviewee']}><IntervieweeDashboardPage /></ProtectedRoute>} />
                 <Route path="/interviewee/interviews" element={<ProtectedRoute allowedRoles={['interviewee']}><IntervieweeInterviewsPage /></ProtectedRoute>} />
+                <Route path="/interviewee/interviews/:id" element={<ProtectedRoute allowedRoles={['interviewee']}><IntervieweeInterviewDetailPage /></ProtectedRoute>} />
                 <Route path="/interviewee/system-check" element={<ProtectedRoute allowedRoles={['interviewee']}><IntervieweeSystemCheckPage /></ProtectedRoute>} />
                 <Route path="/interviewee/history" element={<ProtectedRoute allowedRoles={['interviewee']}><IntervieweeHistoryPage /></ProtectedRoute>} />
                 <Route path="/interviewee/settings" element={<ProtectedRoute allowedRoles={['interviewee']}><IntervieweeSettingsPage /></ProtectedRoute>} />
