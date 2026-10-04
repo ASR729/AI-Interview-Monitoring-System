@@ -4,10 +4,10 @@
 
 ## Current State
 
-- **Current stage:** Phase 6 COMPLETE → Ready for Phase 7 (HR Product)
-- **Current phase:** Phase 6 — Authentication & RBAC
+- **Current stage:** Phase 7 COMPLETE → awaiting approval for Phase 8 (Interviewer Product)
+- **Current phase:** Phase 7 — HR Product
 - **Overall status:** IN PROGRESS
-- **MVP:** IN PROGRESS (authentication/role foundation established)
+- **MVP:** IN PROGRESS (HR-side interview management operational)
 - **V2:** NOT STARTED
 - **SaaS/Enterprise:** NOT STARTED
 
@@ -29,7 +29,7 @@ Plan v1.0 - \[x\] Startup/Product Roadmap v1.0
 |   4 | Python/FastAPI AI Service        | COMPLETE    | 24/24 pytest pass, uvicorn cold start verified, /health + /ready live on :8000, OpenAPI docs 200 |
 |   5 | MongoDB                          | COMPLETE    | MongoDB 8.0.4 local (127.0.0.1:27017), 9 collections, 19 baseline indexes, 43/43 tests pass, /ready live, /health unchanged |
 |   6 | Authentication & RBAC            | COMPLETE    | JWT (HS256) + scrypt hashing, auth/role middleware, protected routes, role-aware frontend routing, 62 new tests; 105/105 backend suite pass |
-|   7 | HR Product                       | NOT STARTED | —            |
+|   7 | HR Product                       | COMPLETE    | 145/145 backend tests pass (40 new Phase 7); HR dashboard/interview CRUD/invitation live against MongoDB; ownership + cross-role matrix verified; frontend build + lint pass |
 |   8 | Interviewer Product              | NOT STARTED | —            |
 |   9 | Candidate/Interviewee Product    | NOT STARTED | —            |
 |  10 | Interview Room                   | NOT STARTED | —            |
@@ -128,7 +128,7 @@ After every phase, update: - status - implementation summary -
 tests/verification - acceptance criteria - limitations - blockers -
 human actions - commit/milestone - next phase
 
-**Last state:** Phase 6 complete. Authentication & RBAC established: stateless JWT (HS256, `jsonwebtoken`) with Bearer transport, scrypt password hashing (Node built-in crypto), `authenticate()`/`authorize()` middleware enforcing the UI/UX product roles (hr/interviewer/interviewee) mapped from the SRS backend role vocabulary, `/api/auth/*` (register/login/logout/me) plus explicit `/api/rbac/*` verification endpoints, interview resource-authorization foundation via documented recruiter/candidate ownership, and role-aware frontend routing wired to the real backend (mock auth removed). Verified by a 105/105-test suite (62 new auth/RBAC tests, synthetic users, dedicated `_test` databases, guarded cleanup) plus live role-matrix and security-audit checks. Regression verified: Phase 3 backend tests pass (`/health` unchanged, backend live on :3001), Phase 4 AI service healthy on :8000, Phase 5 MongoDB/persistence intact, Phase 2 frontend builds and serves at the pinned canonical URL. Ready for Phase 7 (HR Product).
+**Last state:** Phase 7 complete. HR product operational: authenticated HR users create/list/open/update interviews persisted in `interview_sessions` with recruiter ownership enforced on every endpoint (`POST/GET /api/interviews`, `GET/PATCH /api/interviews/:id`, `POST /api/interviews/:id/invite`, `GET /api/candidates`), associate a registered candidate, and initiate the documented invitation workflow (internal `draft → invited` state transition with an opaque `invite_reference`; no external email provider in the MVP boundary). Frontend `/hr` routes (Dashboard, Interviews list, Create Interview, Interview Details, Candidates) are wired to real backend data with loading/empty/error states; fabricated Phase 2 mock metrics (integrity scores, alerts, match scores) were removed from HR screens. Verified by a 145/145 backend suite (40 new Phase 7 integration tests in a dedicated `interview_monitoring_hr_test` database with guarded cleanup), live role/ownership checks against the dev server, `tsc -b && vite build` passing, and lint 0 errors. Regression verified: Phases 2–6 intact. Awaiting explicit approval before Phase 8.
 
 ## Phase 3 Details
 
@@ -498,3 +498,58 @@ contain no passwords/tokens/secrets.
 - `npm audit` reports 3 pre-existing high-severity dev-only advisories (nodemon→chokidar→braces, from Phase 3); unrelated to authentication; not fixed to avoid a breaking nodemon change outside this phase's scope.
 
 **Next Phase:** Phase 7 — HR Product (depends on Phase 6).
+
+## Phase 7 Details
+
+**Implementation Date:** 2026-10-04 (completed across an aborted session and a resumed session; no Phase 8+ work included)
+
+**Status:** COMPLETE — all acceptance gates verified.
+
+**Backend (HR interview management APIs):**
+- `POST /api/interviews` — create an interview (title, candidateId, optional scheduledStartAt); requires HR product role + recruiter profile; validates the candidate reference against the candidates collection (DB-VAL discipline); persists to `interview_sessions` with the owning recruiter_id (status defaults to `draft`)
+- `GET /api/interviews` — list only the authenticated HR user's interviews (recruiter-scoped query; candidate display names joined without exposing password material)
+- `GET /api/interviews/:id` — retrieve an interview the HR user owns (resource authorization via `authorizeInterviewAccess`; 403 for non-owners, 404 unknown)
+- `PATCH /api/interviews/:id` — update `title` and/or `scheduledStartAt` where permitted (narrow allowlisted surface; no candidate reassignment or status mutation through this route)
+- `POST /api/interviews/:id/invite` — documented invitation workflow: internal `draft → invited` transition generating an opaque `invite_reference` (UUID); 409 for already-invited/non-draft interviews; no external email provider (MVP boundary)
+- `GET /api/candidates` — HR candidate selection list (safe fields from linked user records only)
+- All routes reuse Phase 6 `authenticate()` + `authorize('hr')` middleware and the centralized error handler; no new middleware, collections, or dependencies.
+
+**Database:** No schema changes. `interview_sessions` remains the central entity (existing Phase 5 collection, indexes and validation reused). No new collections; no new indexes (listing uses the existing recruiter_id-supported query path).
+
+**Frontend (HR screens wired to real data):**
+- `frontend/src/pages/hr/DashboardPage.tsx` — rewritten from mock data to real `GET /api/interviews`: total/upcoming/in-progress/pending-invitation counts, recent + upcoming interview lists, primary Create Interview action. Fabricated AI/integrity metrics removed (Phase 7 forbids risk scores/alerts).
+- `frontend/src/pages/hr/InterviewsPage.tsx` — rewritten: real interview table (title, candidate, schedule, status badge, invitation state), search + status filter, loading skeletons, empty/error states with retry. The Phase 2 mock schedule modal (with fabricated monitoring settings) was removed — creation happens through the real Create Interview flow.
+- `frontend/src/pages/hr/CreateInterviewPage.tsx` — candidate select (from `GET /api/candidates`), title, optional schedule; validation, submit → detail page; supports candidate preselection via navigation state from the Candidates page.
+- `frontend/src/pages/hr/InterviewDetailPage.tsx` — new: interview metadata, candidate info, schedule, invitation state (reference shown when invited), Edit Details form (title/schedule), Send Invitation confirmation dialog; loading/403/404 states.
+- `frontend/src/pages/hr/CandidatesPage.tsx` — rewritten from fabricated pipeline data (matchScore/stage/source) to the real registered-candidate list with search + a "Create Interview" action.
+- `frontend/src/pages/hr/interviewStatus.ts` — status badge config for the DEC-023 provisional lifecycle set + date formatting.
+- `frontend/src/App.tsx` — routes added: `/hr/interviews/new`, `/hr/interviews/:id` (HR-role protected).
+- Reports/Organization/Settings remain clearly non-functional placeholder screens (Phase 19+/later scope); no dead "future" links remain in HR quick actions (they now point only to real Phase 7 routes).
+
+**Test Results (2026-10-04):** Backend suite **145/145 passed** = 105 existing (Phases 3/5/6) + 40 new Phase 7 tests (`backend/tests/interviews.test.js`: unauthenticated rejection per endpoint, Interviewer/Interviewee 403 across all HR interview endpoints, candidate-list safety, creation success/persistence/ownership/validation/invalid-reference/no-recruiter-profile, list ownership isolation both directions, empty dataset, details 200/403/404, update success/clear-schedule/403/400s/404, invitation success/persistence/403/409 re-invite/409 non-draft/404, /health + /ready regression). Dedicated `interview_monitoring_hr_test` database; guarded drop; synthetic `@example.local` users only; dev database untouched. Frontend: `tsc -b && vite build` passes; lint 0 errors (214 pre-existing-style warnings, reduced from 244 after mock-data removal).
+
+**Live Verification (2026-10-04):** Demo HR login → `GET /api/interviews` returns the owned invited interview with candidate display; `GET /api/candidates` returns safe fields; unknown interview → 404; unauthenticated create/list → 401; Interviewer → HR interview endpoints → 403 (list + invite); all three services healthy on pinned ports (3001/5180/8000).
+
+**Authorization Matrix (Phase 7 additions, verified by tests):**
+
+|  Scenario | Result |
+|-----------|--------|
+| Unauthenticated → any HR interview endpoint | 401 REJECT |
+| HR → create/list/detail/update/invite (own interview) | 200/201 ALLOW |
+| HR → another HR's interview (detail/update/invite) | 403 REJECT |
+| HR listing | only own interviews (no cross-HR leakage) |
+| Interviewer/Interviewee → HR interview endpoints | 403 REJECT |
+| Invalid candidate reference / invalid data | 400 REJECT |
+| Unknown interview id | 404 |
+| Invite already-invited / non-draft interview | 409 REJECT |
+| HR without recruiter profile | 403 REJECT |
+
+**Known Limitations / TBDs:**
+- Invitation is an internal state workflow only (draft → invited + opaque reference). No email delivery exists (no provider is approved for the MVP; Phase 9+ candidate flow will consume the reference).
+- Interview lifecycle states remain the DEC-023 provisional set; only the documented `draft → invited` invitation transition is implemented in Phase 7. No cancellation/expiry states invented.
+- `PATCH` surface is limited to `title` and `scheduled_start_at` (approved fields); candidate reassignment is not an updatable field in this phase.
+- Dev-mode error responses include stack traces (`NODE_ENV=development` only; pre-existing Phase 3 centralized error-handler behavior, unchanged; production/test exclude them).
+- Reports, Organization, and full Settings remain placeholder screens (Phase 19+ / later scope).
+- The single dev-database demo interview ("Backend Developer Screen", invited) was created during Phase 7 browser verification under the seeded demo HR account; test databases were dropped and did not touch it.
+
+**Next Phase:** Phase 8 — Interviewer Product (depends on Phases 6–7). NOT STARTED — awaiting explicit approval.

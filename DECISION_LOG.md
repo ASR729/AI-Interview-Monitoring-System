@@ -908,3 +908,87 @@ UI/UX Specification §7 (UX-AUTH-001/002), IMPLEMENTATION_PLAN.md Phase 6,
 CLAUDE.md §5/§6/§8, DEC-011, DEC-012, DEC-015, DEC-023.
 
 ---
+
+## DEC-028 — Phase 7 HR Product API Surface, Invitation Semantics and HR Screen Data Integrity
+
+**Status:** APPROVED (by implementation)
+**Date:** 2026-10-04
+**Phase:** Phase 7 — HR Product
+
+**Context:**
+Phase 7 requires HR interview management (create/list/open/update, candidate
+association, invitation) using the existing `interview_sessions` collection and
+Phase 6 auth/RBAC. The SRS-FR-005 invitation requirement has no approved email
+provider (Zero-Cost Infrastructure Plan defines an internal MVP boundary), the
+UI/UX §8.1–8.2 dashboard/list concepts were previously rendered with Phase 2
+mock data including fabricated integrity scores/alerts/match scores, and the
+interview lifecycle remains the DEC-023 provisional set.
+
+**Decision:**
+- **API surface:** `POST/GET /api/interviews`, `GET/PATCH /api/interviews/:id`,
+  `POST /api/interviews/:id/invite`, `GET /api/candidates` — all behind the
+  existing `authenticate()` + `authorize('hr')` middleware; ownership on
+  `:id` routes enforced with the Phase 6 `authorizeInterviewAccess()` resource
+  authorization (recruiter profile ↔ `interview_sessions.recruiter_id`). No new
+  collections, no schema changes, no new indexes, no new dependencies.
+- **Creation fields:** exactly `title` (required), `candidateId` (required,
+  validated to resolve to an existing candidate profile), `scheduledStartAt`
+  (optional ISO date). Status defaults to `draft`. No invented company/job/
+  scoring/monitoring-configuration fields (monitoring_configuration remains a
+  documented-but-unexposed Phase 5 schema field).
+- **Update surface:** `PATCH` allows only `title` and `scheduledStartAt`
+  (including clearing the schedule with null). Candidate reassignment and
+  direct status mutation are not permitted through the API in this phase —
+  lifecycle changes happen only through documented workflow operations.
+- **Invitation workflow:** internal state transition only —
+  `draft → invited`, generating an opaque `invite_reference` (UUID) persisted
+  on the interview session, exactly the Database Spec §8 field. No external
+  email provider, no API keys, no delivery claims. Re-inviting an invited or
+  non-draft interview is rejected (409). The candidate-facing consumption of
+  the reference belongs to Phase 9.
+- **Candidate association:** `GET /api/candidates` lists registered candidate
+  profiles (safe user fields only). Candidates are not organization-scoped —
+  no org fields are documented in the Database Specification (multi-tenancy
+  is Phase 24).
+- **HR screens:** Dashboard, Interviews list, Create Interview, Interview
+  Details and Candidates pages are wired to the real APIs with loading/empty/
+  error states. Fabricated Phase 2 mock metrics (integrity scores, alert
+  counts, match scores, fake candidate pipelines) were removed from HR
+  screens — Phase 7 forbids AI risk/fraud metrics, and mock data may not
+  remain where a backend capability exists. Placeholder screens (Reports,
+  Organization, Settings) remain clearly future states.
+
+**Alternatives:**
+- An `hr_interviews` collection (rejected: undocumented duplicate of
+  interview_sessions).
+- External email provider for invitations (rejected: no approved provider/API
+  key; MVP boundary is the internal state workflow).
+- PATCH accepting status/candidate changes (rejected: would silently resolve
+  the DEC-023 TBD lifecycle semantics).
+- Keeping the Phase 2 mock dashboard until later phases (rejected: the
+  corresponding APIs now exist; fabricated metrics violate the Phase 7
+  boundary and data-integrity rules).
+
+**Rationale:**
+- Smallest implementation satisfying SRS-FR-002/004/005, UI/UX §8, and the
+  Database Spec §8 model while preserving DEC-023 TBD discipline and DEC-011
+  backend authorization.
+
+**Impact:**
+- Phase 8 (interviewer assignment) and Phase 9 (candidate invitation
+  consumption) build on these endpoints and the `invite_reference` field.
+- `interviewStatus.ts` is the single frontend status-badge mapping for the
+  provisional lifecycle set.
+
+**Verification:**
+- 145/145 backend tests (40 new Phase 7; full auth/role/ownership/validation/
+  invitation matrix); frontend `tsc -b && vite build` + lint 0 errors; live
+  role/ownership checks on the dev server.
+
+**Related requirements:**
+SRS-FR-002/004/005, Database Specification §8 (invite_reference, §8.1
+lifecycle), UI/UX Specification §8.1–8.2 (UX-HR-001/002), Zero-Cost
+Infrastructure Plan (internal MVP boundary), IMPLEMENTATION_PLAN.md Phase 7,
+CLAUDE.md §2/§5/§6/§7, DEC-005, DEC-011, DEC-015, DEC-023, DEC-027.
+
+---
