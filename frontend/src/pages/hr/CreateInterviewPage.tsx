@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { ArrowLeft, Calendar, User } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/Card'
@@ -10,6 +10,7 @@ import { apiClient, ApiError, CandidateProfileSummary } from '@/lib/api'
 
 export function HRCreateInterviewPage() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { success, danger } = useToast()
 
   const [candidates, setCandidates] = useState<CandidateProfileSummary[]>([])
@@ -17,7 +18,9 @@ export function HRCreateInterviewPage() {
   const [candidatesError, setCandidatesError] = useState<string | null>(null)
 
   const [title, setTitle] = useState('')
-  const [candidateId, setCandidateId] = useState('')
+  const [candidateId, setCandidateId] = useState(
+    (location.state as { candidateId?: string } | null)?.candidateId ?? ''
+  )
   const [scheduledAt, setScheduledAt] = useState('')
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [isSubmitting, setIsSubmitting] = useState(false)

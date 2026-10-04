@@ -17,6 +17,8 @@ import { AccessDeniedPage } from '@/pages/auth/AccessDeniedPage'
 import { HRDashboardPage } from '@/pages/hr/DashboardPage'
 import { HRCandidatesPage } from '@/pages/hr/CandidatesPage'
 import { HRInterviewsPage } from '@/pages/hr/InterviewsPage'
+import { HRCreateInterviewPage } from '@/pages/hr/CreateInterviewPage'
+import { HRInterviewDetailPage } from '@/pages/hr/InterviewDetailPage'
 import { HRReportsPage } from '@/pages/hr/ReportsPage'
 import { HROrganizationPage } from '@/pages/hr/OrganizationPage'
 import { HRSettingsPage } from '@/pages/hr/SettingsPage'
@@ -108,6 +110,8 @@ export function App() {
                 <Route path="/hr/dashboard" element={<ProtectedRoute allowedRoles={['hr']}><HRDashboardPage /></ProtectedRoute>} />
                 <Route path="/hr/candidates" element={<ProtectedRoute allowedRoles={['hr']}><HRCandidatesPage /></ProtectedRoute>} />
                 <Route path="/hr/interviews" element={<ProtectedRoute allowedRoles={['hr']}><HRInterviewsPage /></ProtectedRoute>} />
+                <Route path="/hr/interviews/new" element={<ProtectedRoute allowedRoles={['hr']}><HRCreateInterviewPage /></ProtectedRoute>} />
+                <Route path="/hr/interviews/:id" element={<ProtectedRoute allowedRoles={['hr']}><HRInterviewDetailPage /></ProtectedRoute>} />
                 <Route path="/hr/reports" element={<ProtectedRoute allowedRoles={['hr']}><HRReportsPage /></ProtectedRoute>} />
                 <Route path="/hr/organization" element={<ProtectedRoute allowedRoles={['hr']}><HROrganizationPage /></ProtectedRoute>} />
                 <Route path="/hr/settings" element={<ProtectedRoute allowedRoles={['hr']}><HRSettingsPage /></ProtectedRoute>} />
