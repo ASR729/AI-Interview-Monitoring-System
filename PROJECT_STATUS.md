@@ -4,10 +4,10 @@
 
 ## Current State
 
-- **Current stage:** Phase 7 COMPLETE → awaiting approval for Phase 8 (Interviewer Product)
-- **Current phase:** Phase 7 — HR Product
+- **Current stage:** Phase 8 COMPLETE → awaiting approval for Phase 9 (Candidate/Interviewee Product)
+- **Current phase:** Phase 8 — Interviewer Product
 - **Overall status:** IN PROGRESS
-- **MVP:** IN PROGRESS (HR-side interview management operational)
+- **MVP:** IN PROGRESS (HR-side + interviewer-side interview workflows operational)
 - **V2:** NOT STARTED
 - **SaaS/Enterprise:** NOT STARTED
 
@@ -30,6 +30,7 @@ Plan v1.0 - \[x\] Startup/Product Roadmap v1.0
 |   5 | MongoDB                          | COMPLETE    | MongoDB 8.0.4 local (127.0.0.1:27017), 9 collections, 19 baseline indexes, 43/43 tests pass, /ready live, /health unchanged |
 |   6 | Authentication & RBAC            | COMPLETE    | JWT (HS256) + scrypt hashing, auth/role middleware, protected routes, role-aware frontend routing, 62 new tests; 105/105 backend suite pass |
 |   7 | HR Product                       | COMPLETE    | 145/145 backend tests pass (40 new Phase 7); HR dashboard/interview CRUD/invitation live against MongoDB; ownership + cross-role matrix verified; frontend build + lint pass |
+|   8 | Interviewer Product              | COMPLETE    | 177/177 backend tests pass (32 new Phase 8); interviewer assigned/upcoming/ongoing/completed views + permitted report access live; interviewer assignment (interviewer_id, DEC-029) enforced on the backend; frontend build + lint pass |
 |   8 | Interviewer Product              | NOT STARTED | —            |
 |   9 | Candidate/Interviewee Product    | NOT STARTED | —            |
 |  10 | Interview Room                   | NOT STARTED | —            |
@@ -128,7 +129,7 @@ After every phase, update: - status - implementation summary -
 tests/verification - acceptance criteria - limitations - blockers -
 human actions - commit/milestone - next phase
 
-**Last state:** Phase 7 complete. HR product operational: authenticated HR users create/list/open/update interviews persisted in `interview_sessions` with recruiter ownership enforced on every endpoint (`POST/GET /api/interviews`, `GET/PATCH /api/interviews/:id`, `POST /api/interviews/:id/invite`, `GET /api/candidates`), associate a registered candidate, and initiate the documented invitation workflow (internal `draft → invited` state transition with an opaque `invite_reference`; no external email provider in the MVP boundary). Frontend `/hr` routes (Dashboard, Interviews list, Create Interview, Interview Details, Candidates) are wired to real backend data with loading/empty/error states; fabricated Phase 2 mock metrics (integrity scores, alerts, match scores) were removed from HR screens. Verified by a 145/145 backend suite (40 new Phase 7 integration tests in a dedicated `interview_monitoring_hr_test` database with guarded cleanup), live role/ownership checks against the dev server, `tsc -b && vite build` passing, and lint 0 errors. Regression verified: Phases 2–6 intact. Awaiting explicit approval before Phase 8.
+**Last state:** Phase 8 complete. Interviewer product operational on the existing `interview_sessions` infrastructure: `interview_sessions.interviewer_id` (nullable scalar ref to `users._id`, DEC-029) records the assignment made by the owning HR user (`POST /api/interviews/:id/assign`, optional `interviewerId` at creation, `GET /api/interviewers` selection list); the interviewer product exposes assigned/upcoming/ongoing/completed views (`GET /api/interviewer/interviews`, `GET /api/interviewer/interviews/:id`) and permitted report access (`GET /api/interviewer/interviews/:id/report`, honest 404 until a report exists) with backend-enforced assigned-interview authorization. Frontend interviewer screens (Dashboard, My Interviews, Interview Detail, truthful Live Sessions/Reports placeholders) use real backend data with loading/empty/error states; fabricated Phase 2 mock monitoring data (risk scores, alerts, fake live sessions) was removed. Verified by a 177/177 backend suite (32 new Phase 8 tests in a dedicated `interview_monitoring_interviewer_test` database), live end-to-end assignment/visibility checks against the dev server, `tsc -b && vite build` passing, and lint 0 errors. Awaiting explicit approval before Phase 9.
 
 ## Phase 3 Details
 
@@ -553,3 +554,58 @@ contain no passwords/tokens/secrets.
 - The single dev-database demo interview ("Backend Developer Screen", invited) was created during Phase 7 browser verification under the seeded demo HR account; test databases were dropped and did not touch it.
 
 **Next Phase:** Phase 8 — Interviewer Product (depends on Phases 6–7). NOT STARTED — awaiting explicit approval.
+
+## Phase 8 Details
+
+**Implementation Date:** 2026-10-04
+
+**Status:** COMPLETE — all acceptance gates verified.
+
+**Schema decision (DEC-029, approved by the user before implementation):** The approved Database Specification defines NO interviewer field on `interview_sessions` and the SRS interviewer permissions are TBD, so a schema change was required and stopped for approval. The approved minimum: a single nullable scalar `interviewer_id` (reference to `users._id` with the `interviewer` backend role; no interviewer profile collection exists in the spec) added to `interview_sessions`, mirroring the recruiter_id/candidate_id reference pattern. No new collection. One new index (`idx_int_005_interviewer_status_created`, sparse) mirroring the recruiter listing index — justified by the Phase 8 assigned-listing workload, not speculative.
+
+**Backend (Interviewer Product APIs):**
+- `POST /api/interviews/:id/assign` — the owning HR user assigns (or reassigns, while pre-room) an active interviewer user to their interview; validates the interviewer reference (exists + `interviewer` role + active); rejects assignment on `ready`/`in_progress`/`completed` sessions (409); HR ownership enforced via `authorizeInterviewAccess`
+- `GET /api/interviewers` — HR interviewer selection list (active users with the interviewer role; safe fields only)
+- `POST /api/interviews` — now accepts an optional `interviewerId` at creation (validated identically; invalid references → 400)
+- `GET /api/interviewer/interviews` — assigned-interview list for the authenticated interviewer (interviewer_id-scoped query; candidate name joined, candidate email intentionally withheld per §privacy)
+- `GET /api/interviewer/interviews/:id` — authorized assigned-interview detail (candidate name only; `started_at`/`ended_at` exposed for ongoing/completed sessions)
+- `GET /api/interviewer/interviews/:id/report` — permitted report access (PRD-FR-010, Database Spec §13): returns the existing `final_reports` document for an authorized assigned interview; honest 404 ("Report will be available after the interview is completed and reviewed") when none exists — no fabrication; report generation remains Phase 19
+- `authorizeInterviewAccess` extended (Phase 8 branch): interviewer access is permitted only when `interview_sessions.interviewer_id` equals the authenticated interviewer's user id; unassigned interviews remain inaccessible to interviewers (Phase 6 behavior preserved)
+- All routes reuse Phase 6 auth middleware, the centralized error handler and existing persistence conventions; no new dependencies.
+
+**Frontend:**
+- `frontend/src/pages/interviewer/DashboardPage.tsx` — rewritten from mock data to real `GET /api/interviewer/interviews`: assigned/upcoming/ongoing/completed counts, upcoming list (earliest first), loading/empty/error states. Fabricated AI metrics removed.
+- `frontend/src/pages/interviewer/InterviewsPage.tsx` — rewritten: real assigned table (title, candidate, schedule, status), search + status filter + scheduled-time sorting, loading/empty/error states with retry.
+- `frontend/src/pages/interviewer/InterviewDetailPage.tsx` — new: interview metadata, candidate name, schedule, truthful session state ("The interview room for this session is not open yet" / in-progress / completed states — UX-INT-002 monitoring intentionally NOT implemented), report section with honest availability state.
+- `frontend/src/pages/interviewer/LivePage.tsx` + `ReportsPage.tsx` — fabricated Phase 2 mock monitoring/report data replaced with truthful placeholder states ("available in a later stage"; completed-interviews report list linking to detail pages).
+- HR extension (compatible Phase 7 evolution): `CreateInterviewPage.tsx` gains an optional Interviewer select; HR `InterviewDetailPage.tsx` gains an Assign/Reassign Interviewer modal (assignable while draft/scheduled/invited); `App.tsx` routes `/interviewer/interviews/:id`.
+- Settings remains an existing placeholder screen (existing conventions preserved).
+
+**Test Results (2026-10-04):** Backend suite **177/177 passed** = 145 existing (Phases 3/5/6/7) + 32 new Phase 8 tests (`backend/tests/interviewer.test.js`: AUTH-INT-001 unauthenticated 401 per endpoint; AUTH-INT-002/003 HR/Interviewee 403 across interviewer-only endpoints; interviewer cannot access HR-only operations; assignment workflow — assign-at-creation, assign endpoint, invalid/wrong-role interviewer 400, non-owner 403, in-progress/completed 409, invalid creation reference 400; INT-DASH-001–007 assigned/upcoming/ongoing/completed representation, isolation from other interviewers and unassigned sessions, empty state, detail open 200/403/404, privacy (candidate email withheld); INT-REPORT-001/002 permitted report access with a synthetic fixture, honest 404 absence, unauthorized 403; /health + /ready regression). Dedicated `interview_monitoring_interviewer_test` database; guarded drop; synthetic `@example.local` users only; dev database untouched (one demo-assignment update was made to the existing demo interview during live verification). Frontend: `tsc -b && vite build` passes; lint 0 errors (171 pre-existing-style warnings, reduced from 214 after mock-data removal).
+
+**Live Verification (2026-10-04):** Demo interviewer login → empty assigned list (correct); demo HR assigns the demo interviewer to the existing demo interview → interviewer's assigned list returns the interview with candidate name (no email — privacy); report endpoint → honest 404; HR → interviewer endpoints → 403; unauthenticated → 401; all three services healthy on pinned ports (3001/5180/8000).
+
+**Authorization Matrix (Phase 8 additions, verified by tests):**
+
+|  Scenario | Result |
+|-----------|--------|
+| Unauthenticated → interviewer endpoints (list/detail/report) | 401 REJECT |
+| HR/Interviewee → interviewer-only endpoints | 403 REJECT |
+| Interviewer → HR-only management operations | 403 REJECT |
+| Interviewer → assigned interview (list/detail/report) | 200 ALLOW |
+| Interviewer → unassigned / another interviewer's interview | 403 REJECT |
+| Interviewer listing | only own assigned interviews (no leakage) |
+| Invalid/wrong-role interviewer reference | 400 REJECT |
+| Assign ready/in_progress/completed interview | 409 REJECT |
+| Report when none exists | 404 (truthful, no fabrication) |
+| Unknown interview id | 404 |
+
+**Known Limitations / TBDs:**
+- Interviewer permissions remain "TBD" in the SRS; Phase 8 implements the narrowest model (assigned-interview views + permitted report access). No interviewer HR-administration, user management or organization management exists.
+- Live interview monitoring (UX-INT-002), WebRTC, events, alerts, evidence and the integrity view are NOT implemented (Phases 10+); the Live Sessions screen is a truthful placeholder and interview detail shows honest session-entry states.
+- Report generation does not exist (Phase 19); report access returns honest 404 until a report document exists. Integrity indicators are returned only if present on the stored report.
+- `interviewer_id` is a DEC-029 extension to the documented `interview_sessions` schema (approved during Phase 8); the Database Specification has not been updated to include it (spec documents remain unmodified).
+- Assignment lifecycle rule (assignable while draft/scheduled/invited; 409 afterwards) is a Phase 8 minimum rule; reassignment-after-start remains undefined in the documents.
+- Phase 9 (candidate/interviewee product, invitation consumption, system check) NOT started.
+
+**Next Phase:** Phase 9 — Candidate/Interviewee Product (depends on Phases 6–7). NOT STARTED — awaiting explicit approval.

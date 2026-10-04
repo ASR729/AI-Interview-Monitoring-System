@@ -992,3 +992,91 @@ Infrastructure Plan (internal MVP boundary), IMPLEMENTATION_PLAN.md Phase 7,
 CLAUDE.md §2/§5/§6/§7, DEC-005, DEC-011, DEC-015, DEC-023, DEC-027.
 
 ---
+
+## DEC-029 — Phase 8 Interviewer Assignment Schema, Interviewer Product Surface and Report Access Boundary
+
+**Status:** APPROVED (schema decision approved by the user before implementation)
+**Date:** 2026-10-04
+**Phase:** Phase 8 — Interviewer Product
+
+**Context:**
+Phase 8 requires assigned-interview views and backend-enforced assigned-interview
+authorization, but the approved Database Specification defines NO interviewer
+field on interview_sessions (only recruiter_id/candidate_id connect
+participants), the word "interviewer" does not appear in the Database
+Specification, the SRS interviewer permissions are explicitly TBD, and no
+interviewer profile collection is documented. Phase 6 resourceAccess.js had
+already documented this gap. A schema change was therefore required and the
+implementation stopped for approval per the phase-gate rules.
+
+**Decision (approved):**
+- **Assignment schema:** a single nullable scalar `interviewer_id` is added to
+  `interview_sessions`, referencing `users._id` for a user with the
+  `interviewer` backend role and `active` status. It mirrors the
+  recruiter_id/candidate_id reference pattern. No new collection
+  (interviewer_interviews / assigned_interviews rejected per phase boundary).
+- **Assignment workflow:** the owning HR user assigns/reassigns via
+  `POST /api/interviews/:id/assign` (HR product role + resource ownership) or
+  optionally at creation (`interviewerId` on `POST /api/interviews`); the
+  reference is validated (exists + interviewer role + active; invalid → 400).
+  Assignment is allowed only while the interview is in a pre-room state
+  (draft/scheduled/invited); ready/in_progress/completed reject with 409
+  (no documented reassignment-after-start rule exists; DEC-023 lifecycle
+  preserved untouched).
+- **Interviewer API surface:** `GET /api/interviewer/interviews`,
+  `GET /api/interviewer/interviews/:id`,
+  `GET /api/interviewer/interviews/:id/report` (plus `GET /api/interviewers`
+  for HR assignment support) — a separate role namespace that leaves the
+  Phase 7 HR endpoints untouched.
+- **Authorization:** `authorizeInterviewAccess` gains an interviewer branch —
+  access is permitted only when interview_sessions.interviewer_id equals the
+  authenticated interviewer's user id; unassigned interviews remain
+  inaccessible to interviewers (Phase 6 behavior preserved).
+- **Report access boundary:** permitted report access returns the existing
+  final_reports document for an authorized assigned interview (Database Spec
+  §13; IDX-RPT-001 unique index already existed); when no report exists the
+  endpoint responds 404 with a truthful message. Report generation remains
+  Phase 19. No fabricated report data is exposed.
+- **Privacy:** the interviewer view exposes candidate identity (name) only —
+  candidate email/contact data is intentionally withheld; no password/token
+  material in any response.
+- **Index:** one new sparse index `idx_int_005_interviewer_status_created`
+  ({interviewer_id, status, created_at}) mirroring idx_int_001 for the
+  recruiter listing workload — a current Phase 8 query, not speculative.
+
+**Alternatives:**
+- A separate interview_assignments collection (rejected: forbidden class of
+  collection and more infrastructure than needed).
+- Reusing `/api/interviews/:id` across roles (rejected: would complicate
+  per-role response shaping and weaken the Phase 7 HR boundary).
+- Inventing an interviewers profile collection (rejected: not documented).
+- Fabricating report/live-monitoring data for the interviewer UI (rejected:
+  violates the AI-integrity and data-integrity rules).
+
+**Rationale:**
+- Smallest change enabling UX-INT-001 assigned/upcoming/ongoing/completed
+  views and backend-enforced assigned-interview authorization while
+  preserving the Phase 7 HR boundary, the DEC-023 lifecycle TBD and the
+  no-fabrication rules.
+
+**Impact:**
+- Phase 9 (candidate product) and Phase 10 (interview room) build on the
+  interviewer_id relationship; the room workflow can gate on the assigned
+  interviewer/participants.
+- Phase 19 report generation will target final_reports keyed by interview_id
+  (access path already implemented and tested).
+
+**Verification:**
+- 177/177 backend tests (32 new Phase 8: auth/role matrix, assignment
+  workflow, view representation, isolation, empty state, report access with
+  synthetic fixture, honest 404); frontend `tsc -b && vite build` + lint 0
+  errors; live end-to-end assignment/visibility verification on the dev
+  server.
+
+**Related requirements:**
+UX-INT-001 (§9.1), UX-INT-002 boundary note (§9.2), PRD-FR-002/004/010, SRS
+role table (interviewer permissions TBD), Database Specification §8/§13
+(final_reports), IMPLEMENTATION_PLAN.md Phase 8, CLAUDE.md §2/§5/§6/§7,
+DEC-005, DEC-011, DEC-023, DEC-028.
+
+---
